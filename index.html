@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Dhatri — Dashboard Finanzas</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #f0f4f0; --card: #ffffff; --primary: #2e5c3e; --plight: #4a7c59;
+  --accent: #c9a96e; --text: #1a2e24; --muted: #6b8c78; --border: #dde8dc;
+  --danger: #c0392b; --success: #0F6E56; --warn: #E67E22; --shadow: 0 2px 14px rgba(0,0,0,.07);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text)}
+header{background:linear-gradient(135deg,var(--primary) 0%,#1a3a28 100%);color:#fff;padding:20px 32px;
+  display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 10px rgba(0,0,0,.25);}
+.logo{font-size:22px;font-weight:700;letter-spacing:.5px}
+.logo span{color:var(--accent)}
+.meta{text-align:right;font-size:12px;opacity:.85}
+.container{max-width:1100px;margin:0 auto;padding:24px}
+.card{background:var(--card);border-radius:12px;padding:22px;box-shadow:var(--shadow);margin-bottom:22px}
+.card h3{font-size:16px;margin-bottom:10px;color:var(--primary)}
+.card h4{font-size:13px;margin:18px 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.note{font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.5}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:14px 0}
+.kpi{background:#f7faf7;border-radius:10px;padding:14px 16px;border-top:4px solid var(--primary)}
+.kpi-ok{border-top-color:var(--success)}
+.kpi-pend{border-top-color:var(--warn)}
+.kpi-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+.kpi-val{font-size:24px;font-weight:800;margin-top:4px}
+.progress-wrap{margin:10px 0 18px}
+.progress-bar{background:#e0e0e0;border-radius:6px;height:14px;overflow:hidden}
+.progress-fill{background:linear-gradient(90deg,var(--plight),var(--success));height:100%;}
+.progress-lbl{font-size:12px;color:var(--muted);margin-top:6px}
+.tbl{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+.tbl th{background:var(--primary);color:#fff;padding:8px 10px;text-align:left;font-weight:600;font-size:12px}
+.tbl td{padding:7px 10px;border-bottom:1px solid var(--border)}
+.row-ok{background:#f3faf6}
+.row-pend{background:#fffaf2}
+.badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;text-transform:uppercase;display:inline-block}
+.badge-ok{background:#e3f7ed;color:var(--success)}
+.badge-pend{background:#fdf0e3;color:var(--warn)}
+.badge-growth{background:#e8f5ec;color:var(--primary);margin-left:4px}
+.badge-contador{background:#eee8fb;color:#534AB7}
+.badge-sub{font-size:10px;color:var(--muted);margin-top:2px}
+.alert{background:#fdf0e3;border-left:4px solid var(--warn);padding:12px 16px;border-radius:6px;font-size:13px;margin-bottom:14px}
+.alert b{color:var(--warn)}
+.contador{border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:12px}
+.contador-head{display:flex;justify-content:space-between;font-weight:700;font-size:13px;margin-bottom:6px}
+.contador details{margin-top:8px;font-size:12px;color:var(--muted)}
+.contador summary{cursor:pointer;font-weight:600}
+.contador ul{margin:6px 0 0 18px}
+.area-detalle{border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:8px}
+.area-detalle summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--primary)}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">DHATRI <span>· Finanzas</span></div>
+  <div class="meta"><div>26/06/2026 19:25</div><div>Junio 2026</div></div>
+</header>
+<div class="container">
+
+    <div class="card">
+      <h3>Proyección Julio 2026 — Meta de Ingresos vs Costos Estimados</h3>
+      <p class="note">
+        Costos estimados = listado de pagos de Junio 2026 (excluyendo pagos puntuales como
+        la garantía de arriendo) + ítems nuevos (aire acondicionado $50.000, deuda Emporio $100.000),
+        agrupados por área. "Reducción Decidida" ya se resta del costo ajustado; "En Evaluación"
+        es ahorro potencial adicional que todavía no se aplica (ej. baja de arriendo $500.000 por aprobar).
+      </p>
+      <div class="kpi-row">
+        <div class="kpi kpi-ok"><div class="kpi-lbl">Meta Ingresos</div><div class="kpi-val">$9.800.000</div></div>
+        <div class="kpi kpi-pend"><div class="kpi-lbl">Costo Estimado Base</div><div class="kpi-val">$10.396.553</div></div>
+        <div class="kpi"><div class="kpi-lbl">Neto Base</div><div class="kpi-val" style="color:#c0392b;">$-596.553</div></div>
+        <div class="kpi kpi-pend"><div class="kpi-lbl">Costo Ajustado (decidido)</div><div class="kpi-val">$9.983.153</div></div>
+        <div class="kpi"><div class="kpi-lbl">Neto Ajustado</div><div class="kpi-val" style="color:#c0392b;">$-183.153</div></div>
+      </div>
+      <table class="tbl">
+        <tr><th>Área</th><th style="text-align:right;">Costo Base</th><th style="text-align:right;">Reducción Decidida</th><th style="text-align:right;">Costo Ajustado</th><th style="text-align:right;">En Evaluación (adicional)</th></tr>
+        
+        <tr>
+          <td style="font-weight:600;">Administración</td>
+          <td style="text-align:right;">$4.100.000</td>
+          <td style="text-align:right;color:var(--muted);">
+            —
+          </td>
+          <td style="text-align:right;font-weight:700;">$4.100.000</td>
+          <td style="text-align:right;color:var(--muted);">
+            —
+          </td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;">Arriendo</td>
+          <td style="text-align:right;">$3.280.500</td>
+          <td style="text-align:right;color:var(--muted);">
+            —
+          </td>
+          <td style="text-align:right;font-weight:700;">$3.280.500</td>
+          <td style="text-align:right;color:#E67E22;">
+            -$500.000
+          </td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;">Recepción</td>
+          <td style="text-align:right;">$878.998</td>
+          <td style="text-align:right;color:var(--muted);">
+            —
+          </td>
+          <td style="text-align:right;font-weight:700;">$878.998</td>
+          <td style="text-align:right;color:#E67E22;">
+            -$60.000
+          </td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;">Clases</td>
+          <td style="text-align:right;">$868.354</td>
+          <td style="text-align:right;color:#0F6E56;">
+            -$168.000
+          </td>
+          <td style="text-align:right;font-weight:700;">$700.354</td>
+          <td style="text-align:right;color:#E67E22;">
+            -$48.000
+          </td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;">Operacional</td>
+          <td style="text-align:right;">$366.243</td>
+          <td style="text-align:right;color:var(--muted);">
+            —
+          </td>
+          <td style="text-align:right;font-weight:700;">$366.243</td>
+          <td style="text-align:right;color:var(--muted);">
+            —
+          </td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;">Educación</td>
+          <td style="text-align:right;">$290.000</td>
+          <td style="text-align:right;color:#0F6E56;">
+            -$40.000
+          </td>
+          <td style="text-align:right;font-weight:700;">$250.000</td>
+          <td style="text-align:right;color:var(--muted);">
+            —
+          </td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;">Marketing</td>
+          <td style="text-align:right;">$200.000</td>
+          <td style="text-align:right;color:#0F6E56;">
+            -$150.000
+          </td>
+          <td style="text-align:right;font-weight:700;">$50.000</td>
+          <td style="text-align:right;color:var(--muted);">
+            —
+          </td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;">Deudas</td>
+          <td style="text-align:right;">$159.400</td>
+          <td style="text-align:right;color:var(--muted);">
+            —
+          </td>
+          <td style="text-align:right;font-weight:700;">$159.400</td>
+          <td style="text-align:right;color:var(--muted);">
+            —
+          </td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;">Tecnología</td>
+          <td style="text-align:right;">$153.058</td>
+          <td style="text-align:right;color:#0F6E56;">
+            -$55.400
+          </td>
+          <td style="text-align:right;font-weight:700;">$97.658</td>
+          <td style="text-align:right;color:var(--muted);">
+            —
+          </td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;">Emporio</td>
+          <td style="text-align:right;">$100.000</td>
+          <td style="text-align:right;color:var(--muted);">
+            —
+          </td>
+          <td style="text-align:right;font-weight:700;">$100.000</td>
+          <td style="text-align:right;color:var(--muted);">
+            —
+          </td>
+        </tr>
+        <tr style="background:#f0f4f0;font-weight:700;">
+          <td>Total</td>
+          <td style="text-align:right;">$10.396.553</td>
+          <td style="text-align:right;color:#0F6E56;">-$413.400</td>
+          <td style="text-align:right;">$9.983.153</td>
+          <td style="text-align:right;color:#E67E22;">-$608.000</td>
+        </tr>
+      </table>
+
+      <h4>Detalle de costos por área (para ajustar y corregir)</h4>
+      
+        <details class="area-detalle">
+          <summary>Administración — <b>$4.100.000</b> (7 ítems)</summary>
+          <table class="tbl" style="margin-top:6px;">
+            <tr><th>Concepto</th><th style="text-align:right;">Monto</th></tr>
+            <tr><td>Pago Vish & Gita</td><td style='text-align:right;'>$1.500.000</td></tr><tr><td>Pago Esteban</td><td style='text-align:right;'>$700.000</td></tr><tr><td>Pago Vish & Gita</td><td style='text-align:right;'>$600.000</td></tr><tr><td>Pago Vish & Gita</td><td style='text-align:right;'>$457.917</td></tr><tr><td>Pago Vish & Gita</td><td style='text-align:right;'>$442.083</td></tr><tr><td>Pago Esteban</td><td style='text-align:right;'>$200.000</td></tr><tr><td>Pago Esteban</td><td style='text-align:right;'>$200.000</td></tr>
+          </table>
+        </details>
+        <details class="area-detalle">
+          <summary>Arriendo — <b>$3.280.500</b> (2 ítems)</summary>
+          <table class="tbl" style="margin-top:6px;">
+            <tr><th>Concepto</th><th style="text-align:right;">Monto</th></tr>
+            <tr><td>Arriendo Las condes</td><td style='text-align:right;'>$3.000.000</td></tr><tr><td>Arriendo Provi</td><td style='text-align:right;'>$280.500</td></tr>
+          </table>
+        </details>
+        <details class="area-detalle">
+          <summary>Recepción — <b>$878.998</b> (3 ítems)</summary>
+          <table class="tbl" style="margin-top:6px;">
+            <tr><th>Concepto</th><th style="text-align:right;">Monto</th></tr>
+            <tr><td>Pago Elizabeth</td><td style='text-align:right;'>$462.000</td></tr><tr><td>Pago Nicolas Ibarra</td><td style='text-align:right;'>$356.998</td></tr><tr><td>Pago Nayely</td><td style='text-align:right;'>$60.000</td></tr>
+          </table>
+        </details>
+        <details class="area-detalle">
+          <summary>Clases — <b>$868.354</b> (8 ítems)</summary>
+          <table class="tbl" style="margin-top:6px;">
+            <tr><th>Concepto</th><th style="text-align:right;">Monto</th></tr>
+            <tr><td>Pago Consuelo Silva</td><td style='text-align:right;'>$249.000</td></tr><tr><td>Pago Cesar Lillo</td><td style='text-align:right;'>$158.483</td></tr><tr><td>Pago Coni Aguayo</td><td style='text-align:right;'>$101.700</td></tr><tr><td>Pago Catalina Suckel</td><td style='text-align:right;'>$91.530</td></tr><tr><td>Pago Constanza Torres</td><td style='text-align:right;'>$88.988</td></tr><tr><td>Pago Melisa Guajardo</td><td style='text-align:right;'>$86.445</td></tr><tr><td>Pago Constanza Muñoz</td><td style='text-align:right;'>$51.528</td></tr><tr><td>Pago Katherine Villar</td><td style='text-align:right;'>$40.680</td></tr>
+          </table>
+        </details>
+        <details class="area-detalle">
+          <summary>Operacional — <b>$366.243</b> (6 ítems)</summary>
+          <table class="tbl" style="margin-top:6px;">
+            <tr><th>Concepto</th><th style="text-align:right;">Monto</th></tr>
+            <tr><td>Pago Luz La Gloria</td><td style='text-align:right;'>$157.088</td></tr><tr><td>Pago Contador Diego Cubillos</td><td style='text-align:right;'>$79.285</td></tr><tr><td>Aire acondicionado</td><td style='text-align:right;'>$50.000</td></tr><tr><td>Pago Internet</td><td style='text-align:right;'>$28.520</td></tr><tr><td>Pago Agua Dhatri</td><td style='text-align:right;'>$26.350</td></tr><tr><td>Celulares Dhatri</td><td style='text-align:right;'>$25.000</td></tr>
+          </table>
+        </details>
+        <details class="area-detalle">
+          <summary>Educación — <b>$290.000</b> (1 ítems)</summary>
+          <table class="tbl" style="margin-top:6px;">
+            <tr><th>Concepto</th><th style="text-align:right;">Monto</th></tr>
+            <tr><td>Pago Amanda</td><td style='text-align:right;'>$290.000</td></tr>
+          </table>
+        </details>
+        <details class="area-detalle">
+          <summary>Marketing — <b>$200.000</b> (2 ítems)</summary>
+          <table class="tbl" style="margin-top:6px;">
+            <tr><th>Concepto</th><th style="text-align:right;">Monto</th></tr>
+            <tr><td>Pago Marketing</td><td style='text-align:right;'>$100.000</td></tr><tr><td>Pago Marketing</td><td style='text-align:right;'>$100.000</td></tr>
+          </table>
+        </details>
+        <details class="area-detalle">
+          <summary>Deudas — <b>$159.400</b> (1 ítems)</summary>
+          <table class="tbl" style="margin-top:6px;">
+            <tr><th>Concepto</th><th style="text-align:right;">Monto</th></tr>
+            <tr><td>Pago Deuda Paty</td><td style='text-align:right;'>$159.400</td></tr>
+          </table>
+        </details>
+        <details class="area-detalle">
+          <summary>Tecnología — <b>$153.058</b> (9 ítems)</summary>
+          <table class="tbl" style="margin-top:6px;">
+            <tr><th>Concepto</th><th style="text-align:right;">Monto</th></tr>
+            <tr><td>Zoho-workplace</td><td style='text-align:right;'>$30.592</td></tr><tr><td>Wix.com</td><td style='text-align:right;'>$26.448</td></tr><tr><td>Notion labs, inc.</td><td style='text-align:right;'>$21.429</td></tr><tr><td>Www.albato.com</td><td style='text-align:right;'>$17.469</td></tr><tr><td>Zoom.com 888-799-966</td><td style='text-align:right;'>$16.061</td></tr><tr><td>Zoom.com 888-799-966</td><td style='text-align:right;'>$15.400</td></tr><tr><td>Boletas</td><td style='text-align:right;'>$13.090</td></tr><tr><td>Canva</td><td style='text-align:right;'>$7.900</td></tr><tr><td>Tummee yoga platform</td><td style='text-align:right;'>$4.669</td></tr>
+          </table>
+        </details>
+        <details class="area-detalle">
+          <summary>Emporio — <b>$100.000</b> (1 ítems)</summary>
+          <table class="tbl" style="margin-top:6px;">
+            <tr><th>Concepto</th><th style="text-align:right;">Monto</th></tr>
+            <tr><td>Pago deuda Emporio</td><td style='text-align:right;'>$100.000</td></tr>
+          </table>
+        </details>
+
+      <h4>Detalle de ingresos por área — Junio 2026 (real, Notion)</h4>
+      
+        <details class="area-detalle">
+          <summary>Clases — <b>$4.218.200</b> / meta $4.000.000 (87 ítems)</summary>
+          <table class="tbl" style="margin-top:6px;">
+            <tr><th>Fecha</th><th>Concepto</th><th style="text-align:right;">Monto</th></tr>
+            <tr><td>2026-06-01</td><td>concept cca</td><td style='text-align:right;'>$40.000</td></tr><tr><td>2026-06-01</td><td>Oferta plan medio</td><td style='text-align:right;'>$114.718</td></tr><tr><td>2026-06-02</td><td>plan yajaira segovia</td><td style='text-align:right;'>$34.891</td></tr><tr><td>2026-06-03</td><td>clases javier carmona</td><td style='text-align:right;'>$115.577</td></tr><tr><td>2026-06-03</td><td>Plan Medio 3 Meses</td><td style='text-align:right;'>$129.187</td></tr><tr><td>2026-06-04</td><td>Venta presencial</td><td style='text-align:right;'>$4.393</td></tr><tr><td>2026-06-04</td><td>oferta plan maria ignacia correa</td><td style='text-align:right;'>$115.577</td></tr><tr><td>2026-06-04</td><td>02</td><td style='text-align:right;'>$47.000</td></tr><tr><td>2026-06-04</td><td>concept cca</td><td style='text-align:right;'>$119.250</td></tr><tr><td>2026-06-05</td><td>Plan Medio </td><td style='text-align:right;'>$51.272</td></tr><tr><td>2026-06-05</td><td>Plan Medio </td><td style='text-align:right;'>$51.675</td></tr><tr><td>2026-06-05</td><td>Plan Básico</td><td style='text-align:right;'>$45.468</td></tr><tr><td>2026-06-05</td><td>Plan Medio </td><td style='text-align:right;'>$51.272</td></tr><tr><td>2026-06-05</td><td>Plan Medio </td><td style='text-align:right;'>$51.675</td></tr><tr><td>2026-06-05</td><td>Plan Medio </td><td style='text-align:right;'>$51.272</td></tr><tr><td>2026-06-05</td><td>Venta presencial</td><td style='text-align:right;'>$1.464</td></tr><tr><td>2026-06-05</td><td>Plan Medio </td><td style='text-align:right;'>$51.272</td></tr><tr><td>2026-06-05</td><td>Plan Medio Providencia</td><td style='text-align:right;'>$43.533</td></tr><tr><td>2026-06-05</td><td>Plan Medio </td><td style='text-align:right;'>$51.272</td></tr><tr><td>2026-06-05</td><td>Plan Medio </td><td style='text-align:right;'>$51.272</td></tr><tr><td>2026-06-05</td><td>Estudiantes</td><td style='text-align:right;'>$35.100</td></tr><tr><td>2026-06-05</td><td>Plan Básico</td><td style='text-align:right;'>$45.468</td></tr><tr><td>2026-06-05</td><td>Venta presencial</td><td style='text-align:right;'>$1.454</td></tr><tr><td>2026-06-05</td><td>Plan Medio </td><td style='text-align:right;'>$51.272</td></tr><tr><td>2026-06-05</td><td>Plan Básico</td><td style='text-align:right;'>$45.468</td></tr><tr><td>2026-06-05</td><td>Plan Medio </td><td style='text-align:right;'>$51.272</td></tr><tr><td>2026-06-05</td><td>Plan 4 Clases Provi</td><td style='text-align:right;'>$27.300</td></tr><tr><td>2026-06-05</td><td>Plan Medio </td><td style='text-align:right;'>$51.675</td></tr><tr><td>2026-06-05</td><td>Plan Personas Mayores</td><td style='text-align:right;'>$34.826</td></tr><tr><td>2026-06-05</td><td>Plan Personas Mayores</td><td style='text-align:right;'>$34.826</td></tr><tr><td>2026-06-05</td><td>Plan Medio </td><td style='text-align:right;'>$52.125</td></tr><tr><td>2026-06-05</td><td>Plan Básico</td><td style='text-align:right;'>$45.468</td></tr><tr><td>2026-06-05</td><td>Plan Básico</td><td style='text-align:right;'>$45.468</td></tr><tr><td>2026-06-05</td><td>Plan 4 Clases Provi</td><td style='text-align:right;'>$27.300</td></tr><tr><td>2026-06-05</td><td>Plan Medio </td><td style='text-align:right;'>$51.272</td></tr><tr><td>2026-06-05</td><td>Medio 25% OFF s/s</td><td style='text-align:right;'>$51.675</td></tr><tr><td>2026-06-05</td><td>Plan Personas Mayores</td><td style='text-align:right;'>$35.100</td></tr><tr><td>2026-06-05</td><td>Plan Medio </td><td style='text-align:right;'>$51.675</td></tr><tr><td>2026-06-05</td><td>Plan 4 Clases Provi</td><td style='text-align:right;'>$27.300</td></tr><tr><td>2026-06-05</td><td>Plan Personas Mayores</td><td style='text-align:right;'>$34.826</td></tr><tr><td>2026-06-05</td><td>Plan Básico</td><td style='text-align:right;'>$45.825</td></tr><tr><td>2026-06-05</td><td>Plan Básico</td><td style='text-align:right;'>$45.468</td></tr><tr><td>2026-06-05</td><td>Plan 4 clases Las Condes</td><td style='text-align:right;'>$34.125</td></tr><tr><td>2026-06-05</td><td>Plan Básico</td><td style='text-align:right;'>$45.468</td></tr><tr><td>2026-06-05</td><td>Plan Personas Mayores</td><td style='text-align:right;'>$35.100</td></tr><tr><td>2026-06-05</td><td>Plan Medio </td><td style='text-align:right;'>$51.272</td></tr><tr><td>2026-06-05</td><td>Plan Básico</td><td style='text-align:right;'>$45.468</td></tr><tr><td>2026-06-05</td><td>Plan Personas Mayores</td><td style='text-align:right;'>$35.100</td></tr><tr><td>2026-06-05</td><td>Plan Medio </td><td style='text-align:right;'>$51.272</td></tr><tr><td>2026-06-05</td><td>Plan 4 Clases Provi</td><td style='text-align:right;'>$27.087</td></tr><tr><td>2026-06-05</td><td>Estudiantes</td><td style='text-align:right;'>$35.100</td></tr><tr><td>2026-06-05</td><td>Plan Medio </td><td style='text-align:right;'>$51.675</td></tr><tr><td>2026-06-05</td><td>Plan Medio </td><td style='text-align:right;'>$51.272</td></tr><tr><td>2026-06-05</td><td>Plan Medio </td><td style='text-align:right;'>$51.675</td></tr><tr><td>2026-06-06</td><td>concept cca</td><td style='text-align:right;'>$38.000</td></tr><tr><td>2026-06-06</td><td>Plan 4 clases Las Condes</td><td style='text-align:right;'>$34.125</td></tr><tr><td>2026-06-07</td><td>Plan Medio </td><td style='text-align:right;'>$51.272</td></tr><tr><td>2026-06-07</td><td>Plan Medio </td><td style='text-align:right;'>$51.675</td></tr><tr><td>2026-06-07</td><td>concept cca</td><td style='text-align:right;'>$103.273</td></tr><tr><td>2026-06-08</td><td>Plan 4 Clases Provi</td><td style='text-align:right;'>$27.300</td></tr><tr><td>2026-06-09</td><td>Plan 4 Clases Provi</td><td style='text-align:right;'>$23.659</td></tr><tr><td>2026-06-09</td><td>Plan Medio </td><td style='text-align:right;'>$44.436</td></tr><tr><td>2026-06-09</td><td>Clases de yoga suave, 3ra edad</td><td style='text-align:right;'>$36.000</td></tr><tr><td>2026-06-11</td><td>4 clases de yoga nes junio 2026 lucia Go</td><td style='text-align:right;'>$35.000</td></tr><tr><td>2026-06-11</td><td>concept cca</td><td style='text-align:right;'>$15.000</td></tr><tr><td>2026-06-11</td><td>concept cca</td><td style='text-align:right;'>$25.110</td></tr><tr><td>2026-06-12</td><td>Venta presencial</td><td style='text-align:right;'>$1.464</td></tr><tr><td>2026-06-12</td><td>clases</td><td style='text-align:right;'>$34.891</td></tr><tr><td>2026-06-13</td><td>Plan Medio 3 Meses</td><td style='text-align:right;'>$128.180</td></tr><tr><td>2026-06-13</td><td>Estudiantes</td><td style='text-align:right;'>$35.100</td></tr><tr><td>2026-06-14</td><td>43</td><td style='text-align:right;'>$10.000</td></tr><tr><td>2026-06-16</td><td>Link de pago</td><td style='text-align:right;'>$186.628</td></tr><tr><td>2026-06-16</td><td>clases</td><td style='text-align:right;'>$34.891</td></tr><tr><td>2026-06-18</td><td>43</td><td style='text-align:right;'>$20.000</td></tr><tr><td>2026-06-18</td><td>Plan Medio </td><td style='text-align:right;'>$29.282</td></tr><tr><td>2026-06-18</td><td>43</td><td style='text-align:right;'>$35.000</td></tr><tr><td>2026-06-18</td><td>Plan 4 Clases Provi</td><td style='text-align:right;'>$15.469</td></tr><tr><td>2026-06-19</td><td>Venta presencial</td><td style='text-align:right;'>$1.464</td></tr><tr><td>2026-06-19</td><td>Venta presencial</td><td style='text-align:right;'>$1.454</td></tr><tr><td>2026-06-19</td><td>Plan medio 3 meses</td><td style='text-align:right;'>$114.718</td></tr><tr><td>2026-06-19</td><td>43</td><td style='text-align:right;'>$40.000</td></tr><tr><td>2026-06-20</td><td>Venta presencial</td><td style='text-align:right;'>$19.526</td></tr><tr><td>2026-06-22</td><td>(Clau A Vergara)</td><td style='text-align:right;'>$110.500</td></tr><tr><td>2026-06-23</td><td>concept cca</td><td style='text-align:right;'>$80.000</td></tr><tr><td>2026-06-24</td><td>Plan Básico 3 Meses</td><td style='text-align:right;'>$105.300</td></tr><tr><td>2026-06-25</td><td>cecilia haramburu  del 2506 al 3107</td><td style='text-align:right;'>$70.666</td></tr><tr><td>2026-06-25</td><td>concept cca</td><td style='text-align:right;'>$30.000</td></tr>
+          </table>
+        </details>
+        <details class="area-detalle">
+          <summary>Finanzas — <b>$2.205.442</b> / meta $2.000.000 (2 ítems)</summary>
+          <table class="tbl" style="margin-top:6px;">
+            <tr><th>Fecha</th><th>Concepto</th><th style="text-align:right;">Monto</th></tr>
+            <tr><td>2026-06-01</td><td>Payment linked to a loan origination</td><td style='text-align:right;'>$2.050.000</td></tr><tr><td>2026-06-25</td><td>concept cca</td><td style='text-align:right;'>$155.442</td></tr>
+          </table>
+        </details>
+        <details class="area-detalle">
+          <summary>Educación — <b>$1.659.396</b> / meta $1.500.000 (24 ítems)</summary>
+          <table class="tbl" style="margin-top:6px;">
+            <tr><th>Fecha</th><th>Concepto</th><th style="text-align:right;">Monto</th></tr>
+            <tr><td>2026-06-05</td><td>N3 5 Cuotas</td><td style='text-align:right;'>$126.750</td></tr><tr><td>2026-06-05</td><td>FN1 '26 30dsct</td><td style='text-align:right;'>$98.191</td></tr><tr><td>2026-06-05</td><td>Yoga N1 26'</td><td style='text-align:right;'>$140.273</td></tr><tr><td>2026-06-05</td><td>N1A26 15OFF</td><td style='text-align:right;'>$119.232</td></tr><tr><td>2026-06-05</td><td>F26N1 5 cuotas</td><td style='text-align:right;'>$120.169</td></tr><tr><td>2026-06-05</td><td>N326 4c 15OFF</td><td style='text-align:right;'>$106.898</td></tr><tr><td>2026-06-05</td><td>Plan Javi AN3</td><td style='text-align:right;'>$68.250</td></tr><tr><td>2026-06-05</td><td>N1A26 15OFF</td><td style='text-align:right;'>$120.169</td></tr><tr><td>2026-06-05</td><td>A25 Consultores</td><td style='text-align:right;'>$54.174</td></tr><tr><td>2026-06-05</td><td>N326 4c </td><td style='text-align:right;'>$125.762</td></tr><tr><td>2026-06-06</td><td>Consultorías en Práctica Curso Ayurveda N3</td><td style='text-align:right;'>$30.784</td></tr><tr><td>2026-06-08</td><td>concept cca</td><td style='text-align:right;'>$123.250</td></tr><tr><td>2026-06-10</td><td>FN2 26</td><td style='text-align:right;'>$134.550</td></tr><tr><td>2026-06-11</td><td>Taller de Digesti?n  para el s?bado 20 . Gracias</td><td style='text-align:right;'>$20.000</td></tr><tr><td>2026-06-13</td><td>concept cca</td><td style='text-align:right;'>$50.000</td></tr><tr><td>2026-06-15</td><td>Consultorías en Práctica Curso Ayurveda N3</td><td style='text-align:right;'>$30.784</td></tr><tr><td>2026-06-16</td><td>Taller mejora tu digestión-Mejora tu digestión</td><td style='text-align:right;'>$25.202</td></tr><tr><td>2026-06-18</td><td>taller digestion</td><td style='text-align:right;'>$19.384</td></tr><tr><td>2026-06-19</td><td>Taller mejora tu digestión-Mejora tu digestión</td><td style='text-align:right;'>$24.790</td></tr><tr><td>2026-06-19</td><td>concept cca</td><td style='text-align:right;'>$10.000</td></tr><tr><td>2026-06-20</td><td>concept cca</td><td style='text-align:right;'>$50.000</td></tr><tr><td>2026-06-20</td><td>concept cca</td><td style='text-align:right;'>$20.000</td></tr><tr><td>2026-06-26</td><td>Consultorías en Práctica Curso Ayurveda N3</td><td style='text-align:right;'>$30.784</td></tr><tr><td>2026-06-26</td><td>INFORMACION REF. 260626549054</td><td style='text-align:right;'>$10.000</td></tr>
+          </table>
+        </details>
+        <details class="area-detalle">
+          <summary>Terapias — <b>$1.552.192</b> / meta $1.500.000 (38 ítems)</summary>
+          <table class="tbl" style="margin-top:6px;">
+            <tr><th>Fecha</th><th>Concepto</th><th style="text-align:right;">Monto</th></tr>
+            <tr><td>2026-06-01</td><td>concept cca</td><td style='text-align:right;'>$21.500</td></tr><tr><td>2026-06-03</td><td>Pack masajes</td><td style='text-align:right;'>$67.340</td></tr><tr><td>2026-06-03</td><td>concept cca</td><td style='text-align:right;'>$43.000</td></tr><tr><td>2026-06-03</td><td>concept cca</td><td style='text-align:right;'>$25.000</td></tr><tr><td>2026-06-04</td><td>terapia</td><td style='text-align:right;'>$47.839</td></tr><tr><td>2026-06-04</td><td>masaje</td><td style='text-align:right;'>$47.351</td></tr><tr><td>2026-06-05</td><td>Sonoterapia Natalie y Romina</td><td style='text-align:right;'>$24.000</td></tr><tr><td>2026-06-06</td><td>abhy mas sve</td><td style='text-align:right;'>$50.768</td></tr><tr><td>2026-06-08</td><td>concept cca</td><td style='text-align:right;'>$23.000</td></tr><tr><td>2026-06-10</td><td>mitad terapia energetica</td><td style='text-align:right;'>$20.990</td></tr><tr><td>2026-06-10</td><td>concept cca</td><td style='text-align:right;'>$21.500</td></tr><tr><td>2026-06-10</td><td>terapia</td><td style='text-align:right;'>$24.230</td></tr><tr><td>2026-06-10</td><td>terapia</td><td style='text-align:right;'>$22.292</td></tr><tr><td>2026-06-10</td><td>concept cca</td><td style='text-align:right;'>$23.000</td></tr><tr><td>2026-06-11</td><td>concept cca</td><td style='text-align:right;'>$30.600</td></tr><tr><td>2026-06-11</td><td>terapia abhyanga</td><td style='text-align:right;'>$22.455</td></tr><tr><td>2026-06-13</td><td>Sonoterapia-SONOTERAPIA</td><td style='text-align:right;'>$14.991</td></tr><tr><td>2026-06-13</td><td>resto de abhyanga</td><td style='text-align:right;'>$9.763</td></tr><tr><td>2026-06-13</td><td>masaje abhyanga </td><td style='text-align:right;'>$47.006</td></tr><tr><td>2026-06-17</td><td>concept cca</td><td style='text-align:right;'>$140.000</td></tr><tr><td>2026-06-17</td><td>concept cca</td><td style='text-align:right;'>$46.000</td></tr><tr><td>2026-06-18</td><td>terapia y 2 mizos</td><td style='text-align:right;'>$26.848</td></tr><tr><td>2026-06-18</td><td>mirad abhyanga vapor</td><td style='text-align:right;'>$26.000</td></tr><tr><td>2026-06-18</td><td>terapia</td><td style='text-align:right;'>$41.981</td></tr><tr><td>2026-06-19</td><td>terapia</td><td style='text-align:right;'>$26.604</td></tr><tr><td>2026-06-19</td><td>Sonoterapia-SONOTERAPIA</td><td style='text-align:right;'>$14.874</td></tr><tr><td>2026-06-19</td><td>Sonoterapia-SONOTERAPIA</td><td style='text-align:right;'>$14.874</td></tr><tr><td>2026-06-20</td><td>sonoterapia</td><td style='text-align:right;'>$53.306</td></tr><tr><td>2026-06-20</td><td>Sonoterapia-SONOTERAPIA</td><td style='text-align:right;'>$29.748</td></tr><tr><td>2026-06-20</td><td>promocion masaje</td><td style='text-align:right;'>$58.152</td></tr><tr><td>2026-06-20</td><td>Sonoterapia-SONOTERAPIA</td><td style='text-align:right;'>$14.991</td></tr><tr><td>2026-06-20</td><td>terapia energetica</td><td style='text-align:right;'>$41.981</td></tr><tr><td>2026-06-22</td><td>concept cca</td><td style='text-align:right;'>$158.400</td></tr><tr><td>2026-06-22</td><td>Tr. Abhyanga</td><td style='text-align:right;'>$135.642</td></tr><tr><td>2026-06-23</td><td>terapia energetica</td><td style='text-align:right;'>$41.676</td></tr><tr><td>2026-06-24</td><td>concept cca</td><td style='text-align:right;'>$21.500</td></tr><tr><td>2026-06-25</td><td>concept cca</td><td style='text-align:right;'>$52.000</td></tr><tr><td>2026-06-25</td><td>terapia</td><td style='text-align:right;'>$20.990</td></tr>
+          </table>
+        </details>
+        <details class="area-detalle">
+          <summary>Arriendo — <b>$864.100</b> / meta $800.000 (4 ítems)</summary>
+          <table class="tbl" style="margin-top:6px;">
+            <tr><th>Fecha</th><th>Concepto</th><th style="text-align:right;">Monto</th></tr>
+            <tr><td>2026-06-01</td><td>Arriendo junio</td><td style='text-align:right;'>$238.000</td></tr><tr><td>2026-06-06</td><td>concept cca</td><td style='text-align:right;'>$439.200</td></tr><tr><td>2026-06-08</td><td>Junio arriendo sala</td><td style='text-align:right;'>$158.400</td></tr><tr><td>2026-06-21</td><td>concept cca</td><td style='text-align:right;'>$28.500</td></tr>
+          </table>
+        </details>
+        <details class="area-detalle">
+          <summary>Emporio — <b>$280.745</b> (sin meta asignada) (20 ítems)</summary>
+          <table class="tbl" style="margin-top:6px;">
+            <tr><th>Fecha</th><th>Concepto</th><th style="text-align:right;">Monto</th></tr>
+            <tr><td>2026-06-03</td><td>bombon</td><td style='text-align:right;'>$2.929</td></tr><tr><td>2026-06-03</td><td>bonbom</td><td style='text-align:right;'>$1.464</td></tr><tr><td>2026-06-04</td><td>polera el eden</td><td style='text-align:right;'>$20.493</td></tr><tr><td>2026-06-05</td><td>emporio</td><td style='text-align:right;'>$22.435</td></tr><tr><td>2026-06-09</td><td>lulea</td><td style='text-align:right;'>$78.088</td></tr><tr><td>2026-06-11</td><td>emporio</td><td style='text-align:right;'>$6.784</td></tr><tr><td>2026-06-12</td><td>bombom</td><td style='text-align:right;'>$1.454</td></tr><tr><td>2026-06-16</td><td>barra mizos</td><td style='text-align:right;'>$1.464</td></tr><tr><td>2026-06-18</td><td>emporio</td><td style='text-align:right;'>$1.464</td></tr><tr><td>2026-06-19</td><td>emporio</td><td style='text-align:right;'>$1.904</td></tr><tr><td>2026-06-22</td><td>emporio</td><td style='text-align:right;'>$2.929</td></tr><tr><td>2026-06-23</td><td>emporio</td><td style='text-align:right;'>$3.905</td></tr><tr><td>2026-06-23</td><td>Protein choc 23 junio 2026</td><td style='text-align:right;'>$1.500</td></tr><tr><td>2026-06-23</td><td>emporio</td><td style='text-align:right;'>$1.454</td></tr><tr><td>2026-06-24</td><td>kombucha</td><td style='text-align:right;'>$2.423</td></tr><tr><td>2026-06-24</td><td>emporio</td><td style='text-align:right;'>$1.464</td></tr><tr><td>2026-06-25</td><td>emporio</td><td style='text-align:right;'>$8.626</td></tr><tr><td>2026-06-25</td><td>emporio lulea</td><td style='text-align:right;'>$70.083</td></tr><tr><td>2026-06-26</td><td>concept cca</td><td style='text-align:right;'>$15.000</td></tr><tr><td>2026-06-26</td><td>emporio lulea</td><td style='text-align:right;'>$34.882</td></tr>
+          </table>
+        </details>
+        <details class="area-detalle">
+          <summary>Día Dhatri — <b>$78.742</b> (sin meta asignada) (5 ítems)</summary>
+          <table class="tbl" style="margin-top:6px;">
+            <tr><th>Fecha</th><th>Concepto</th><th style="text-align:right;">Monto</th></tr>
+            <tr><td>2026-06-08</td><td>Taller inversion sabado</td><td style='text-align:right;'>$20.000</td></tr><tr><td>2026-06-10</td><td>Taller equilibrio desde las manos-Taller equilibrio de manos</td><td style='text-align:right;'>$19.832</td></tr><tr><td>2026-06-12</td><td>evento el 20 junio</td><td style='text-align:right;'>$19.384</td></tr><tr><td>2026-06-19</td><td>meditacion sabado </td><td style='text-align:right;'>$9.763</td></tr><tr><td>2026-06-20</td><td>sono</td><td style='text-align:right;'>$9.763</td></tr>
+          </table>
+        </details>
+    </div>
+    <div class="card">
+      <h3>Posibles Reducciones de Costos</h3>
+      <p class="note">
+        Medidas identificadas para reducir egresos.
+        Ahorros confirmados: <b>$413.400/mes</b> &nbsp;·&nbsp;
+        Total potencial (incluye en evaluación): <b>$1.021.400/mes</b>
+        (más items "por definir" en operacional, clases y recepción — cifra imagen: 570 mil sin Eli/Nico, 760 mil con).
+      </p>
+      <table class="tbl">
+        <tr><th>Área</th><th>Medida</th><th style="text-align:right;">Ahorro Est.</th><th>Estado</th></tr>
+        
+            <tr class="row-ok">
+              <td rowspan="1" style="font-weight:700;vertical-align:top;padding-top:8px;">Marketing</td>
+              <td>Reducir presupuesto mensual (350 → 200 mil)</td>
+              <td style="text-align:right;font-weight:600;color:#0F6E56;">$150.000</td>
+              <td><span class="badge badge-ok">Decidido</span></td>
+            </tr>
+            <tr class="row-ok">
+              <td rowspan="2" style="font-weight:700;vertical-align:top;padding-top:8px;">Tecnología</td>
+              <td>Sacar Manychat</td>
+              <td style="text-align:right;font-weight:600;color:#0F6E56;">$40.000</td>
+              <td><span class="badge badge-ok">Decidido</span></td>
+            </tr>
+            <tr class="row-ok">
+              
+              <td>Evaluar cancelar 1 cuenta Zoom</td>
+              <td style="text-align:right;font-weight:600;color:#0F6E56;">$15.400</td>
+              <td><span class="badge badge-ok">Decidido</span></td>
+            </tr>
+            <tr class="row-ok">
+              <td rowspan="2" style="font-weight:700;vertical-align:top;padding-top:8px;">Operacional</td>
+              <td>Reducir uso luz (parafinas)</td>
+              <td style="text-align:right;font-weight:600;color:#0F6E56;">Por definir</td>
+              <td><span class="badge badge-ok">Decidido</span></td>
+            </tr>
+            <tr class="row-ok">
+              
+              <td>Eliminar jardinero</td>
+              <td style="text-align:right;font-weight:600;color:#0F6E56;">Por definir</td>
+              <td><span class="badge badge-ok">Decidido</span></td>
+            </tr>
+            <tr class="row-ok">
+              <td rowspan="1" style="font-weight:700;vertical-align:top;padding-top:8px;">Emporio</td>
+              <td>Vender muebles (ingreso puntual, no recurrente)</td>
+              <td style="text-align:right;font-weight:600;color:#0F6E56;">Por definir</td>
+              <td><span class="badge badge-ok">Decidido</span></td>
+            </tr>
+            <tr class="row-pend">
+              <td rowspan="6" style="font-weight:700;vertical-align:top;padding-top:8px;">Clases</td>
+              <td>Sacar clase Nico 19:00 hrs</td>
+              <td style="text-align:right;font-weight:600;color:#E67E22;">$48.000</td>
+              <td><span class="badge badge-pend">En evaluación</span></td>
+            </tr>
+            <tr class="row-ok">
+              
+              <td>Sacar clase Cata Suckel 18:30 hrs</td>
+              <td style="text-align:right;font-weight:600;color:#0F6E56;">$48.000</td>
+              <td><span class="badge badge-ok">Decidido</span></td>
+            </tr>
+            <tr class="row-ok">
+              
+              <td>Sacar clase Hatha 18:00 hrs</td>
+              <td style="text-align:right;font-weight:600;color:#0F6E56;">$60.000</td>
+              <td><span class="badge badge-ok">Decidido</span></td>
+            </tr>
+            <tr class="row-ok">
+              
+              <td>Evaluar clase Coni Muñoz miérc. 13 hrs → Gita</td>
+              <td style="text-align:right;font-weight:600;color:#0F6E56;">$60.000</td>
+              <td><span class="badge badge-ok">Decidido</span></td>
+            </tr>
+            <tr class="row-ok">
+              
+              <td>Consuelo: sáb/lun a $15.000 en vez de $17.000</td>
+              <td style="text-align:right;font-weight:600;color:#0F6E56;">Por definir</td>
+              <td><span class="badge badge-ok">Decidido</span></td>
+            </tr>
+            <tr class="row-ok">
+              
+              <td>Viernes: clase 1h30 yoga suave + sono (pago único 20-22 mil)</td>
+              <td style="text-align:right;font-weight:600;color:#0F6E56;">Por definir</td>
+              <td><span class="badge badge-ok">Decidido</span></td>
+            </tr>
+            <tr class="row-pend">
+              <td rowspan="3" style="font-weight:700;vertical-align:top;padding-top:8px;">Recepción</td>
+              <td>Turno Nayely viernes (-60 mil) / Eli cubre más tarde</td>
+              <td style="text-align:right;font-weight:600;color:#E67E22;">$60.000</td>
+              <td><span class="badge badge-pend">En evaluación</span></td>
+            </tr>
+            <tr class="row-pend">
+              
+              <td>Revisar turno martes Nico</td>
+              <td style="text-align:right;font-weight:600;color:#E67E22;">Por definir</td>
+              <td><span class="badge badge-pend">En evaluación</span></td>
+            </tr>
+            <tr class="row-pend">
+              
+              <td>Disminuir horas Eli</td>
+              <td style="text-align:right;font-weight:600;color:#E67E22;">Por definir</td>
+              <td><span class="badge badge-pend">En evaluación</span></td>
+            </tr>
+        <tr style="background:#f0f4f0;font-weight:700;">
+          <td colspan="2">Total ahorros cuantificados (decididos)</td>
+          <td style="text-align:right;">$413.400</td>
+          <td></td>
+        </tr>
+        <tr style="background:#e8f5ec;font-weight:700;">
+          <td colspan="2">Total potencial (todos los cuantificados)</td>
+          <td style="text-align:right;">$1.021.400</td>
+          <td></td>
+        </tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>Basal vs Real — Junio 2026</h3>
+      <p class="note">
+        Basal = listado planificado de pagos del mes (sheet), agrupado por área.
+        Real = egresos efectivamente registrados en la base de Ingresos &amp; Egresos (Notion),
+        por departamento. Permite ver dónde la realidad se está desviando del plan.
+      </p>
+      <div class="kpi-row">
+        <div class="kpi kpi-pend"><div class="kpi-lbl">Total Basal</div><div class="kpi-val">$12.963.487</div></div>
+        <div class="kpi"><div class="kpi-lbl">Total Real</div><div class="kpi-val">$10.302.285</div></div>
+      </div>
+      <table class="tbl">
+        <tr><th>Área</th><th style="text-align:right;">Basal</th><th style="text-align:right;">Real</th><th style="text-align:right;">Diferencia</th></tr>
+        
+        <tr>
+          <td style="font-weight:600;">Arriendo</td>
+          <td style="text-align:right;">$4.780.500</td>
+          <td style="text-align:right;">$3.271.000</td>
+          <td style="text-align:right;color:#0F6E56;font-weight:600;">$-1.509.500</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;">Administración</td>
+          <td style="text-align:right;">$4.100.000</td>
+          <td style="text-align:right;">$2.833.090</td>
+          <td style="text-align:right;color:#0F6E56;font-weight:600;">$-1.266.910</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;">Operacional</td>
+          <td style="text-align:right;">$1.066.243</td>
+          <td style="text-align:right;">$345.855</td>
+          <td style="text-align:right;color:#0F6E56;font-weight:600;">$-720.388</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;">Recepción</td>
+          <td style="text-align:right;">$918.998</td>
+          <td style="text-align:right;">$1.016.791</td>
+          <td style="text-align:right;color:#c0392b;font-weight:600;">+$97.793</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;">Clases</td>
+          <td style="text-align:right;">$868.354</td>
+          <td style="text-align:right;">$489.871</td>
+          <td style="text-align:right;color:#0F6E56;font-weight:600;">$-378.483</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;">Deudas</td>
+          <td style="text-align:right;">$574.710</td>
+          <td style="text-align:right;">$0</td>
+          <td style="text-align:right;color:#0F6E56;font-weight:600;">$-574.710</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;">Educación</td>
+          <td style="text-align:right;">$290.000</td>
+          <td style="text-align:right;">$324.331</td>
+          <td style="text-align:right;color:#c0392b;font-weight:600;">+$34.331</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;">Marketing</td>
+          <td style="text-align:right;">$200.000</td>
+          <td style="text-align:right;">$317.235</td>
+          <td style="text-align:right;color:#c0392b;font-weight:600;">+$117.235</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;">Tecnología</td>
+          <td style="text-align:right;">$164.682</td>
+          <td style="text-align:right;">$73.803</td>
+          <td style="text-align:right;color:#0F6E56;font-weight:600;">$-90.879</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;">Emporio</td>
+          <td style="text-align:right;">$0</td>
+          <td style="text-align:right;">$174.189</td>
+          <td style="text-align:right;color:#c0392b;font-weight:600;">+$174.189</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;">Finanzas</td>
+          <td style="text-align:right;">$0</td>
+          <td style="text-align:right;">$1.401.325</td>
+          <td style="text-align:right;color:#c0392b;font-weight:600;">+$1.401.325</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;">Terapias</td>
+          <td style="text-align:right;">$0</td>
+          <td style="text-align:right;">$54.795</td>
+          <td style="text-align:right;color:#c0392b;font-weight:600;">+$54.795</td>
+        </tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>Egresos a Pagar — Junio 2026</h3>
+      
+      <div class="progress-wrap">
+        <div class="progress-bar"><div class="progress-fill" style="width:58.3%;"></div></div>
+        <div class="progress-lbl">$7.554.411 pagado de $12.963.487 &nbsp;·&nbsp; 58.3%</div>
+      </div>
+      <div class="kpi-row">
+        <div class="kpi"><div class="kpi-lbl">Total Egresos</div><div class="kpi-val">$12.963.487</div></div>
+        <div class="kpi kpi-ok"><div class="kpi-lbl">Pagado</div><div class="kpi-val">$7.554.411</div></div>
+        <div class="kpi kpi-pend"><div class="kpi-lbl">Pendiente</div><div class="kpi-val">$5.409.076</div></div>
+      </div>
+      <table class="tbl">
+        <tr><th>Fecha</th><th>Concepto</th><th>Categoría</th><th style="text-align:right;">Monto</th><th>Estado</th></tr>
+        
+        <tr class="row-pend">
+          <td>01/06</td>
+          <td>Garantía arriendo</td>
+          <td>Arriendo</td>
+          <td style="text-align:right;font-weight:600;">$1.500.000</td>
+          <td><span class="badge badge-pend">Pendiente</span></td>
+        </tr>
+        <tr class="row-ok">
+          <td>01/06</td>
+          <td>Boletas</td>
+          <td>Sistemas</td>
+          <td style="text-align:right;font-weight:600;">$13.090</td>
+          <td><span class="badge badge-ok">Pagado</span></td>
+        </tr>
+        <tr class="row-pend">
+          <td>05/06</td>
+          <td>Pago Vish & Gita</td>
+          <td>Directivo</td>
+          <td style="text-align:right;font-weight:600;">$1.500.000</td>
+          <td><span class="badge badge-contador">Ver contador ↓</span></td>
+        </tr>
+        <tr class="row-ok">
+          <td>05/06</td>
+          <td>Arriendo Las condes</td>
+          <td>Arriendo</td>
+          <td style="text-align:right;font-weight:600;">$3.000.000</td>
+          <td><span class="badge badge-ok">Pagado</span></td>
+        </tr>
+        <tr class="row-ok">
+          <td>05/06</td>
+          <td>Arriendo Provi</td>
+          <td>Arriendo</td>
+          <td style="text-align:right;font-weight:600;">$280.500</td>
+          <td><span class="badge badge-ok">Pagado</span></td>
+        </tr>
+        <tr class="row-pend">
+          <td>05/06</td>
+          <td>Pago Esteban</td>
+          <td>Directivo</td>
+          <td style="text-align:right;font-weight:600;">$700.000</td>
+          <td><span class="badge badge-contador">Ver contador ↓</span></td>
+        </tr>
+        <tr class="row-ok">
+          <td>06/06</td>
+          <td>Zoho-workplace</td>
+          <td>Sistemas</td>
+          <td style="text-align:right;font-weight:600;">$30.592</td>
+          <td><span class="badge badge-ok">Pagado</span></td>
+        </tr>
+        <tr class="row-ok">
+          <td>06/06</td>
+          <td>Www.albato.com</td>
+          <td>Sistemas</td>
+          <td style="text-align:right;font-weight:600;">$17.469</td>
+          <td><span class="badge badge-ok">Pagado</span></td>
+        </tr>
+        <tr class="row-ok">
+          <td>07/06</td>
+          <td>Canva</td>
+          <td>Sistemas</td>
+          <td style="text-align:right;font-weight:600;">$7.900</td>
+          <td><span class="badge badge-ok">Pagado</span></td>
+        </tr>
+        <tr class="row-ok">
+          <td>08/06</td>
+          <td>Pago Deuda Paty</td>
+          <td>Deudas</td>
+          <td style="text-align:right;font-weight:600;">$159.400</td>
+          <td><span class="badge badge-ok">Pagado</span></td>
+        </tr>
+        <tr class="row-ok">
+          <td>08/06</td>
+          <td>Wix.com 1212841827</td>
+          <td>Sistemas</td>
+          <td style="text-align:right;font-weight:600;">$33.053</td>
+          <td><span class="badge badge-ok">Pagado</span></td>
+        </tr>
+        <tr class="row-ok">
+          <td>09/06</td>
+          <td>Celulares Dhatri</td>
+          <td>Cuentas & Gastos Comunes</td>
+          <td style="text-align:right;font-weight:600;">$25.000</td>
+          <td><span class="badge badge-ok">Pagado</span></td>
+        </tr>
+        <tr class="row-pend">
+          <td>10/06</td>
+          <td>Pago Vish & Gita</td>
+          <td>Directivo</td>
+          <td style="text-align:right;font-weight:600;">$457.917</td>
+          <td><span class="badge badge-contador">Ver contador ↓</span></td>
+        </tr>
+        <tr class="row-ok">
+          <td>10/06</td>
+          <td>Pago Amanda</td>
+          <td>Remuneraciones</td>
+          <td style="text-align:right;font-weight:600;">$290.000</td>
+          <td><span class="badge badge-ok">Pagado</span></td>
+        </tr>
+        <tr class="row-ok">
+          <td>10/06</td>
+          <td>Pago Elizabeth</td>
+          <td>Remuneraciones</td>
+          <td style="text-align:right;font-weight:600;">$462.000</td>
+          <td><span class="badge badge-ok">Pagado</span></td>
+        </tr>
+        <tr class="row-ok">
+          <td>11/06</td>
+          <td>Zoom.com 888-799-966</td>
+          <td>Sistemas</td>
+          <td style="text-align:right;font-weight:600;">$16.061</td>
+          <td><span class="badge badge-ok">Pagado</span></td>
+        </tr>
+        <tr class="row-ok">
+          <td>12/06</td>
+          <td>Pago Internet</td>
+          <td>Cuentas & Gastos Comunes</td>
+          <td style="text-align:right;font-weight:600;">$28.520</td>
+          <td><span class="badge badge-ok">Pagado</span></td>
+        </tr>
+        <tr class="row-ok">
+          <td>15/06</td>
+          <td>Pago Marketing</td>
+          <td>Marketing</td>
+          <td style="text-align:right;font-weight:600;">$100.000</td>
+          <td><span class="badge badge-ok">Pagado</span></td>
+        </tr>
+        <tr class="row-pend">
+          <td>15/06</td>
+          <td>Pago Nicolas Ibarra</td>
+          <td>Remuneraciones</td>
+          <td style="text-align:right;font-weight:600;">$356.998</td>
+          <td><span class="badge badge-pend">Pendiente</span></td>
+        </tr>
+        <tr class="row-ok">
+          <td>15/06</td>
+          <td>Pago Constanza Muñoz</td>
+          <td>Remuneraciones</td>
+          <td style="text-align:right;font-weight:600;">$51.528</td>
+          <td><span class="badge badge-ok">Pagado</span><div class="badge-sub">Notion: 2026-06-18 · $51.528</div></td>
+        </tr>
+        <tr class="row-ok">
+          <td>15/06</td>
+          <td>Pago Melisa Guajardo</td>
+          <td>Remuneraciones</td>
+          <td style="text-align:right;font-weight:600;">$86.445</td>
+          <td><span class="badge badge-ok">Pagado</span><div class="badge-sub">Notion: 2026-06-22 · $86.445</div></td>
+        </tr>
+        <tr class="row-ok">
+          <td>15/06</td>
+          <td>Pago Constanza Torres</td>
+          <td>Remuneraciones</td>
+          <td style="text-align:right;font-weight:600;">$88.988</td>
+          <td><span class="badge badge-ok">Pagado</span><div class="badge-sub">Notion: 2026-06-21 · $88.988</div></td>
+        </tr>
+        <tr class="row-ok">
+          <td>15/06</td>
+          <td>Pago Catalina Suckel</td>
+          <td>Remuneraciones</td>
+          <td style="text-align:right;font-weight:600;">$91.530</td>
+          <td><span class="badge badge-ok">Pagado</span><div class="badge-sub">Notion: 2026-06-21 · $91.530</div></td>
+        </tr>
+        <tr class="row-ok">
+          <td>15/06</td>
+          <td>Pago Agua Dhatri</td>
+          <td>Cuentas & Gastos Comunes</td>
+          <td style="text-align:right;font-weight:600;">$26.350</td>
+          <td><span class="badge badge-ok">Pagado</span><div class="badge-sub">Notion: 2026-06-07 · $26.236</div></td>
+        </tr>
+        <tr class="row-ok">
+          <td>15/06</td>
+          <td>Pago Katherine Villar</td>
+          <td>Remuneraciones</td>
+          <td style="text-align:right;font-weight:600;">$40.680</td>
+          <td><span class="badge badge-ok">Pagado</span><div class="badge-sub">Notion: 2026-06-24 · $40.680</div></td>
+        </tr>
+        <tr class="row-pend">
+          <td>15/06</td>
+          <td>Pago Vish & Gita</td>
+          <td>Directivo</td>
+          <td style="text-align:right;font-weight:600;">$442.083</td>
+          <td><span class="badge badge-contador">Ver contador ↓</span></td>
+        </tr>
+        <tr class="row-ok">
+          <td>15/06</td>
+          <td>Pago Coni Aguayo</td>
+          <td>Remuneraciones</td>
+          <td style="text-align:right;font-weight:600;">$101.700</td>
+          <td><span class="badge badge-ok">Pagado</span><div class="badge-sub">Notion: 2026-06-22 · $101.700</div></td>
+        </tr>
+        <tr class="row-ok">
+          <td>15/06</td>
+          <td>Pago Luz La Gloria</td>
+          <td>Cuentas & Gastos Comunes</td>
+          <td style="text-align:right;font-weight:600;">$157.088</td>
+          <td><span class="badge badge-ok">Pagado</span><div class="badge-sub">Notion: 2026-06-01 · $157.088</div></td>
+        </tr>
+        <tr class="row-ok">
+          <td>17/06</td>
+          <td>Wix.com</td>
+          <td>Sistemas</td>
+          <td style="text-align:right;font-weight:600;">$26.448</td>
+          <td><span class="badge badge-ok">Pagado</span><div class="badge-sub">Notion: 2026-06-24 · $26.267</div></td>
+        </tr>
+        <tr class="row-pend">
+          <td>17/06</td>
+          <td>Pago Esteban</td>
+          <td>Directivo</td>
+          <td style="text-align:right;font-weight:600;">$200.000</td>
+          <td><span class="badge badge-contador">Ver contador ↓</span></td>
+        </tr>
+        <tr class="row-pend">
+          <td>18/06</td>
+          <td>Pago Vish & Gita</td>
+          <td>Directivo</td>
+          <td style="text-align:right;font-weight:600;">$600.000</td>
+          <td><span class="badge badge-contador">Ver contador ↓</span></td>
+        </tr>
+        <tr class="row-ok">
+          <td>20/06</td>
+          <td>Pago Nayely</td>
+          <td>Remuneraciones</td>
+          <td style="text-align:right;font-weight:600;">$100.000</td>
+          <td><span class="badge badge-ok">Pagado</span></td>
+        </tr>
+        <tr class="row-pend">
+          <td>20/06</td>
+          <td>Pago Cesar Lillo</td>
+          <td>Remuneraciones</td>
+          <td style="text-align:right;font-weight:600;">$158.483</td>
+          <td><span class="badge badge-pend">Pendiente</span></td>
+        </tr>
+        <tr class="row-pend">
+          <td>20/06</td>
+          <td>Pago Consuelo Silva</td>
+          <td>Remuneraciones</td>
+          <td style="text-align:right;font-weight:600;">$249.000</td>
+          <td><span class="badge badge-pend">Pendiente</span></td>
+        </tr>
+        <tr class="row-ok">
+          <td>20/06</td>
+          <td>Pago Marketing</td>
+          <td>Marketing</td>
+          <td style="text-align:right;font-weight:600;">$100.000</td>
+          <td><span class="badge badge-ok">Pagado</span><div class="badge-sub">Notion: 2026-06-10 · $100.000</div></td>
+        </tr>
+        <tr class="row-pend">
+          <td>20/06</td>
+          <td>Credito Esteban</td>
+          <td>Deudas</td>
+          <td style="text-align:right;font-weight:600;">$350.000</td>
+          <td><span class="badge badge-pend">Pendiente</span></td>
+        </tr>
+        <tr class="row-pend">
+          <td>25/06</td>
+          <td>Pago Esteban</td>
+          <td>Directivo</td>
+          <td style="text-align:right;font-weight:600;">$200.000</td>
+          <td><span class="badge badge-contador">Ver contador ↓</span></td>
+        </tr>
+        <tr class="row-ok">
+          <td>26/06</td>
+          <td>Zoom.com 888-799-966</td>
+          <td>Sistemas</td>
+          <td style="text-align:right;font-weight:600;">$15.400</td>
+          <td><span class="badge badge-ok">Pagado</span><div class="badge-sub">Notion: 2026-06-04 · $15.000</div></td>
+        </tr>
+        <tr class="row-pend">
+          <td>30/06</td>
+          <td>Pago SII Dhatri SPA</td>
+          <td>Remuneraciones</td>
+          <td style="text-align:right;font-weight:600;">$750.000</td>
+          <td><span class="badge badge-pend">Pendiente</span></td>
+        </tr>
+        <tr class="row-pend">
+          <td>30/06</td>
+          <td>Pago Contador Diego Cubillos</td>
+          <td>Remuneraciones</td>
+          <td style="text-align:right;font-weight:600;">$79.285</td>
+          <td><span class="badge badge-pend">Pendiente</span></td>
+        </tr>
+        <tr class="row-ok">
+          <td>30/06</td>
+          <td>Tummee yoga platform</td>
+          <td>Sistemas</td>
+          <td style="text-align:right;font-weight:600;">$4.669</td>
+          <td><span class="badge badge-ok">Pagado</span><div class="badge-sub">Notion: 2026-06-23 · $4.704</div></td>
+        </tr>
+        <tr class="row-pend">
+          <td>30/06</td>
+          <td>INtereses Credito Esteban</td>
+          <td>Deudas</td>
+          <td style="text-align:right;font-weight:600;">$65.310</td>
+          <td><span class="badge badge-pend">Pendiente</span></td>
+        </tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>Contadores de pagos fraccionados</h3>
+      <p class="note">
+        Vish &amp; Gita y Esteban se pagan en varias transferencias durante el mes
+        (registradas en Ingresos &amp; Egresos como Egreso / Administración a nombre
+        de Diego Maldonado y Esteban Gauna). Aquí se compara el total planificado
+        del mes vs lo efectivamente transferido a la fecha.
+      </p>
+      
+        <div class="contador">
+          <div class="contador-head">
+            <span>Pago Vish & Gita</span>
+            <span>$1.950.000 / $3.000.000</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:65.0%;background:var(--plight);"></div></div>
+          <div class="progress-lbl">
+            65.0% pagado &nbsp;·&nbsp; Pendiente: $1.050.000
+          </div>
+          <details>
+            <summary>Transferencias registradas (8)</summary>
+            <ul><li>2026-06-01 — $300.000</li><li>2026-06-05 — $800.000</li><li>2026-06-07 — $400.000</li><li>2026-06-10 — $100.000</li><li>2026-06-12 — $100.000</li><li>2026-06-19 — $70.000</li><li>2026-06-21 — $80.000</li><li>2026-06-23 — $100.000</li></ul>
+          </details>
+        </div>
+        <div class="contador">
+          <div class="contador-head">
+            <span>Pago Esteban</span>
+            <span>$870.000 / $1.100.000</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:79.1%;background:var(--plight);"></div></div>
+          <div class="progress-lbl">
+            79.1% pagado &nbsp;·&nbsp; Pendiente: $230.000
+          </div>
+          <details>
+            <summary>Transferencias registradas (5)</summary>
+            <ul><li>2026-06-01 — $300.000</li><li>2026-06-05 — $400.000</li><li>2026-06-19 — $20.000</li><li>2026-06-21 — $50.000</li><li>2026-06-24 — $100.000</li></ul>
+          </details>
+        </div>
+    </div>
+    <div class="card">
+      <h3>Distribución de Egresos por Categoría — Junio 2026</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:center;">
+        <div style="position:relative;height:260px;width:260px;flex:0 0 260px;">
+          <canvas id="pieEgresos"></canvas>
+        </div>
+        <table class="tbl" style="flex:1;min-width:240px;">
+          <tr><th>Categoría</th><th style="text-align:right;">Monto</th><th style="text-align:right;">%</th></tr>
+          
+        <tr>
+          <td>Arriendo</td>
+          <td style="text-align:right;">$4.780.500</td>
+          <td style="text-align:right;">36.9%</td>
+        </tr>
+        <tr>
+          <td>Directivo</td>
+          <td style="text-align:right;">$4.100.000</td>
+          <td style="text-align:right;">31.6%</td>
+        </tr>
+        <tr>
+          <td>Remuneraciones</td>
+          <td style="text-align:right;">$2.906.637</td>
+          <td style="text-align:right;">22.4%</td>
+        </tr>
+        <tr>
+          <td>Deudas</td>
+          <td style="text-align:right;">$574.710</td>
+          <td style="text-align:right;">4.4%</td>
+        </tr>
+        <tr>
+          <td>Cuentas & Gastos Comunes</td>
+          <td style="text-align:right;">$236.958</td>
+          <td style="text-align:right;">1.8%</td>
+        </tr>
+        <tr>
+          <td>Marketing</td>
+          <td style="text-align:right;">$200.000</td>
+          <td style="text-align:right;">1.5%</td>
+        </tr>
+        <tr>
+          <td>Sistemas</td>
+          <td style="text-align:right;">$164.682</td>
+          <td style="text-align:right;">1.3%</td>
+        </tr>
+        </table>
+      </div>
+    </div>
+    <script>
+    new Chart(document.getElementById('pieEgresos'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Arriendo', 'Directivo', 'Remuneraciones', 'Deudas', 'Cuentas & Gastos Comunes', 'Marketing', 'Sistemas'],
+        datasets: [{
+          data: [4780500.0, 4099999.6667, 2906637.0, 574710.0, 236958.0, 200000.0, 164682.0],
+          backgroundColor: ['#2e5c3e','#4a7c59','#c9a96e','#1B4F91','#534AB7','#E67E22','#0F6E56','#c0392b','#6b8c78','#a5d6a7','#888'],
+        }]
+      },
+      options: { plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } } }
+    });
+    </script>
+    <div class="card">
+      <h3>Deudas Pendientes</h3>
+      <p class="note">Deudas detectadas en Mayo que no quedaron incluidas en el listado mensual, más otras consolidadas.</p>
+      <div class="kpi-row">
+        <div class="kpi kpi-pend"><div class="kpi-lbl">Total Deudas</div><div class="kpi-val">$3.768.037</div></div>
+        <div class="kpi kpi-pend"><div class="kpi-lbl">SII Histórico</div><div class="kpi-val">$6.825.278</div></div>
+      </div>
+      <table class="tbl">
+        <tr><th>Concepto</th><th>Categoría</th><th style="text-align:right;">Monto</th><th>Estado</th></tr>
+        
+        <tr>
+          <td>Garantía arriendo</td>
+          <td>Arriendo</td>
+          <td style="text-align:right;font-weight:600;">$3.000.000</td>
+          <td style="font-size:12px;color:var(--muted);">pendiente desde 01/05/2026</td>
+        </tr>
+        <tr>
+          <td>Credito Bco Estado Dhatri Vish 1</td>
+          <td>Deudas</td>
+          <td style="text-align:right;font-weight:600;">$54.521</td>
+          <td style="font-size:12px;color:var(--muted);">pendiente desde 05/05/2026</td>
+        </tr>
+        <tr>
+          <td>Credito Bco Estado Dhatri Vish 2</td>
+          <td>Deudas</td>
+          <td style="text-align:right;font-weight:600;">$224.665</td>
+          <td style="font-size:12px;color:var(--muted);">pendiente desde 05/05/2026</td>
+        </tr>
+        <tr>
+          <td>Credito Bco Estado Dhatri Vish 3</td>
+          <td>Deudas</td>
+          <td style="text-align:right;font-weight:600;">$38.851</td>
+          <td style="font-size:12px;color:var(--muted);">pendiente desde 05/05/2026</td>
+        </tr>
+        <tr>
+          <td>Deuda provi</td>
+          <td>Deudas</td>
+          <td style="text-align:right;font-weight:600;">$50.000</td>
+          <td style="font-size:12px;color:var(--muted);">pendiente desde 30/05/2026</td>
+        </tr>
+        <tr>
+          <td>Deuda Emporio</td>
+          <td>Emporio</td>
+          <td style="text-align:right;font-weight:600;">$400.000</td>
+          <td style="font-size:12px;color:var(--muted);">sin fecha</td>
+        </tr>
+      </table>
+      <h4>SII — histórico mensual</h4>
+      <table class="tbl">
+        <tr><th>Mes</th><th style="text-align:right;">Monto</th></tr>
+        <tr><td>Octubre 2024</td><td style='text-align:right;'>$986.192</td></tr><tr><td>Noviembre 2024</td><td style='text-align:right;'>$911.501</td></tr><tr><td>Diciembre 2024</td><td style='text-align:right;'>$413.807</td></tr><tr><td>Enero 2025</td><td style='text-align:right;'>$450.805</td></tr><tr><td>Febrero 2025</td><td style='text-align:right;'>$597.166</td></tr><tr><td>Abril 2025</td><td style='text-align:right;'>$539.426</td></tr><tr><td>Mayo 2025</td><td style='text-align:right;'>$676.925</td></tr><tr><td>Junio 2025</td><td style='text-align:right;'>$51.734</td></tr><tr><td>Febrero 2026</td><td style='text-align:right;'>$824.917</td></tr><tr><td>Marzo 2026</td><td style='text-align:right;'>$374.949</td></tr><tr><td>Abril 2026</td><td style='text-align:right;'>$489.097</td></tr><tr><td>Mayo 2026</td><td style='text-align:right;'>$508.759</td></tr>
+        <tr style="background:#f0f4f0;font-weight:700;"><td>Total</td><td style="text-align:right;">$6.825.278</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>Inversiones, Créditos y Préstamos</h3>
+      <p class="note">
+        Fuente: <a href="https://www.notion.so/20157760cde1806b9458cde9d8efbf38?v=20157760cde180a090b4000c3d547b4d" target="_blank">base Notion "Inversiones - Créditos - Deudas"</a>.
+        Incluye el nuevo préstamo de Paty ($3.000.000, devolución desde enero 2027).
+      </p>
+      <div class="kpi-row">
+        <div class="kpi"><div class="kpi-lbl">Total Recibido</div><div class="kpi-val">$40.350.000</div></div>
+        <div class="kpi kpi-pend"><div class="kpi-lbl">Total a Devolver</div><div class="kpi-val">$31.775.000</div></div>
+      </div>
+      <table class="tbl">
+        <tr><th>Nombre</th><th>Tipo</th><th style="text-align:right;">Valor</th><th style="text-align:right;">V. Devolución</th><th>Fecha Devolución</th><th>Estado</th><th>Obs.</th></tr>
+        
+        <tr>
+          <td>Lorena</td>
+          <td>Préstamos</td>
+          <td style="text-align:right;">$1.000.000</td>
+          <td style="text-align:right;">$1.300.000</td>
+          <td>2026-07-15</td>
+          <td><span class="badge" style="background:#eee;color:#1B4F91;">Inversión recibida</span></td>
+          <td style="font-size:11px;color:var(--muted);">30%</td>
+        </tr>
+        <tr>
+          <td>Adrian</td>
+          <td>Préstamos</td>
+          <td style="text-align:right;">$1.000.000</td>
+          <td style="text-align:right;">$1.300.000</td>
+          <td>2026-05-12</td>
+          <td><span class="badge" style="background:#eee;color:#1B4F91;">Inversión recibida</span></td>
+          <td style="font-size:11px;color:var(--muted);">30%</td>
+        </tr>
+        <tr>
+          <td>Giovanni</td>
+          <td>Préstamos</td>
+          <td style="text-align:right;">$3.000.000</td>
+          <td style="text-align:right;">$4.500.000</td>
+          <td>2027-01-30</td>
+          <td><span class="badge" style="background:#eee;color:#1B4F91;">Inversión recibida</span></td>
+          <td style="font-size:11px;color:var(--muted);">50%, una sola cuota al 2027</td>
+        </tr>
+        <tr>
+          <td>Lola</td>
+          <td>Préstamos</td>
+          <td style="text-align:right;">$2.000.000</td>
+          <td style="text-align:right;">$2.500.000</td>
+          <td>2025-12-17</td>
+          <td><span class="badge" style="background:#eee;color:#c0392b;">Postergada</span></td>
+          <td style="font-size:11px;color:var(--muted);">25% de interés</td>
+        </tr>
+        <tr>
+          <td>Nitai</td>
+          <td>Préstamos</td>
+          <td style="text-align:right;">$2.750.000</td>
+          <td style="text-align:right;">$3.575.000</td>
+          <td>2027-11-01</td>
+          <td><span class="badge" style="background:#eee;color:#c0392b;">Por postergar</span></td>
+          <td style="font-size:11px;color:var(--muted);">2 cuotas 1.787.500, 30%</td>
+        </tr>
+        <tr>
+          <td>Mamá Vish</td>
+          <td>Préstamos</td>
+          <td style="text-align:right;">$600.000</td>
+          <td style="text-align:right;">$600.000</td>
+          <td>—</td>
+          <td><span class="badge" style="background:#eee;color:#c0392b;">Por postergar</span></td>
+          <td style="font-size:11px;color:var(--muted);">sin interés, préstamo por urgencia</td>
+        </tr>
+        <tr>
+          <td>Ainara</td>
+          <td>Préstamos</td>
+          <td style="text-align:right;">$2.000.000</td>
+          <td style="text-align:right;">$3.000.000</td>
+          <td>2025-10-15</td>
+          <td><span class="badge" style="background:#eee;color:#c0392b;">Postergada</span></td>
+          <td style="font-size:11px;color:var(--muted);">2 cuotas, 1.5M c/u, 50%</td>
+        </tr>
+        <tr>
+          <td>Esteban</td>
+          <td>Inversión</td>
+          <td style="text-align:right;">$12.500.000</td>
+          <td style="text-align:right;">—</td>
+          <td>—</td>
+          <td><span class="badge" style="background:#eee;color:#1B4F91;">Inversión recibida</span></td>
+          <td style="font-size:11px;color:var(--muted);"></td>
+        </tr>
+        <tr>
+          <td>Paty</td>
+          <td>Préstamos</td>
+          <td style="text-align:right;">$12.500.000</td>
+          <td style="text-align:right;">$15.000.000</td>
+          <td>2025-10-15</td>
+          <td><span class="badge" style="background:#eee;color:#c0392b;">Postergada</span></td>
+          <td style="font-size:11px;color:var(--muted);">cambio al 20% (desde el 50% previamente establecido)</td>
+        </tr>
+        <tr>
+          <td>Paty</td>
+          <td>Préstamos</td>
+          <td style="text-align:right;">$3.000.000</td>
+          <td style="text-align:right;">—</td>
+          <td>2027-01-01</td>
+          <td><span class="badge" style="background:#eee;color:#1B4F91;">Inversión recibida</span></td>
+          <td style="font-size:11px;color:var(--muted);">Nuevo préstamo — devolución a partir de enero 2027</td>
+        </tr>
+      </table>
+    </div>
+</div>
+</body>
+</html>
