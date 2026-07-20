@@ -194,16 +194,16 @@ OVERRIDES_MES_PROX = {
 PAGOS_PERSONAL_JULIO = [
     # Consuelo y Cesar excluidos: pagos periodo Junio pagados con atraso en Julio
     # → aparecen en "adicionales" sumados; los de Julio se cargarán cuando llegue la planilla
-    {"nombre": "Pago Constanza Aguayo",     "categoria": "Remuneraciones", "dia": 5,  "monto": 114_413},
-    {"nombre": "Pago Constanza Muñoz",      "categoria": "Remuneraciones", "dia": 5,  "monto": 51_528},
-    {"nombre": "Pago Amanda",               "categoria": "Remuneraciones", "dia": 15, "monto": 290_000},
+    {"nombre": "Pago Constanza Aguayo",     "categoria": "Remuneraciones", "dia": 15, "monto": 114_413},
+    {"nombre": "Pago Constanza Muñoz",      "categoria": "Remuneraciones", "dia": 15, "monto": 51_528},
+    {"nombre": "Pago Amanda",               "categoria": "Remuneraciones", "dia": 10, "monto": 290_000},
     # Neto (199.163+96.615+162.720=458.498) − 135.000×0,7 (ajuste clases) = 363.998
-    {"nombre": "Pago Nicolas Ibarra",       "categoria": "Remuneraciones", "dia": 5,  "monto": 363_998},
-    {"nombre": "Pago Katherine Villar",     "categoria": "Remuneraciones", "dia": 5,  "monto": 40_680},
-    {"nombre": "Pago Nayely",               "categoria": "Remuneraciones", "dia": 5,  "monto": 88_000},
-    {"nombre": "Pago Catalina Suckel",      "categoria": "Remuneraciones", "dia": 5,  "monto": 101_700},
-    {"nombre": "Pago Elizabeth",            "categoria": "Remuneraciones", "dia": 5,  "monto": 437_310},
-    {"nombre": "Pago Constanza Torres",     "categoria": "Remuneraciones", "dia": 5,  "monto": 114_413},
+    {"nombre": "Pago Nicolas Ibarra",       "categoria": "Remuneraciones", "dia": 15, "monto": 363_998},
+    {"nombre": "Pago Katherine Villar",     "categoria": "Remuneraciones", "dia": 15, "monto": 40_680},
+    {"nombre": "Pago Nayely",               "categoria": "Remuneraciones", "dia": 15, "monto": 88_000},
+    {"nombre": "Pago Catalina Suckel",      "categoria": "Remuneraciones", "dia": 15, "monto": 101_700},
+    {"nombre": "Pago Elizabeth",            "categoria": "Remuneraciones", "dia": 10, "monto": 437_310},
+    {"nombre": "Pago Constanza Torres",     "categoria": "Remuneraciones", "dia": 15, "monto": 114_413},
     {"nombre": "Pago Contador Diego",       "categoria": "Directivo",      "dia": 30, "monto": 79_285},
 ]
 
