@@ -376,21 +376,25 @@ def query_notion_month(year, month):
 # 3. Matching de egresos del sheet contra Notion
 # ─────────────────────────────────────────────
 
+# Items que NUNCA se marcan como pagados via auto-match por monto, porque pueden
+# tener pagos previos (de meses anteriores) con montos idénticos en Notion.
+SIEMPRE_PENDIENTE = {"Pago Cesar Lillo", "Pago Consuelo Silva"}
+
+
 def marcar_pagados(items, registros_notion, tolerancia=500):
     """Marca pagado_auto=True si encuentra un Egreso en Notion con monto similar.
 
-    Los items que correspondan a un "contador" (pagos fraccionados, ej. Vish & Gita
-    o Esteban) se excluyen de este matching 1:1 por monto, porque se pagan en
-    varias transferencias distintas durante el mes — su avance se calcula aparte.
+    Los contadores y items en SIEMPRE_PENDIENTE se excluyen del matching 1:1,
+    porque se pagan en cuotas o tienen pagos anteriores con montos iguales.
     """
-    nombres_contador = {c["nombre_sheet"] for c in CONTADORES}
+    nombres_excluir = {c["nombre_sheet"] for c in CONTADORES} | SIEMPRE_PENDIENTE
     egresos_notion = [r for r in registros_notion if r["movimiento"] == "Egreso"]
     usados = set()
     for it in items:
         it["pagado_auto"] = False
         it["match_notion"] = None
-        it["es_contador"] = it["nombre"] in nombres_contador
-        if it["pagado_manual"] or it["es_contador"]:
+        it["es_contador"] = it["nombre"] in {c["nombre_sheet"] for c in CONTADORES}
+        if it["pagado_manual"] or it["nombre"] in nombres_excluir:
             continue
         for i, r in enumerate(egresos_notion):
             if i in usados:
@@ -530,7 +534,7 @@ def _find_extras_notion(egresos_julio, registros_notion):
     return sorted(extras, key=lambda x: x["fecha"])
 
 
-def build_tabla_egresos(items, titulo, extras=None, extra_note=""):
+def build_tabla_egresos(items, titulo, extras=None, contadores_dict=None, extra_note=""):
     # Separar items agrupados de individuales
     grupos: dict = {}
     individuales = []
@@ -569,12 +573,18 @@ def build_tabla_egresos(items, titulo, extras=None, extra_note=""):
           <td>{badge}</td>
         </tr>"""
 
+    contadores_dict = contadores_dict or {}
     pagado_total_items = 0
     for it in sorted(individuales, key=lambda x: x["dia"]):
         pag, r = _row(it)
         rows += r
         if pag:
             pagado_total_items += it["monto"]
+        elif it.get("es_contador"):
+            # Sumar lo ya pagado parcialmente en el contador
+            ctr = contadores_dict.get(it["nombre"])
+            if ctr:
+                pagado_total_items += min(ctr["pagado"], it["monto"])
 
     # Filas agrupadas (Operacional, Emporio): una fila resumen + detalle colapsable
     for grupo_nombre, g_items in sorted(grupos.items()):
@@ -1213,6 +1223,7 @@ def main():
         egresos_julio,
         f"Egresos a Pagar — {MES_ACTUAL_NOMBRE}",
         extras=extras_notion,
+        contadores_dict=ctr_by_sheet,
     )
     # 3. Contadores de pagos fraccionados
     html += build_contadores(contadores)
