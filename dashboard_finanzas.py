@@ -208,6 +208,15 @@ PAGOS_PERSONAL_JULIO = [
 ]
 
 # Nombres de personal en la hoja de Junio que se reemplazan con los valores de Julio
+# Pagos de periodo Junio pagados con atraso en Julio: aparecen como adicionales fijos
+# (no se buscan en Notion porque pueden no estar registrados aún en Ingresos & Egresos)
+ADICIONALES_PERIODO_ANTERIOR = [
+    {"fecha": "2026-07-20", "detalle": "Cesar Lillo (periodo Junio, pagado en Julio)",
+     "dept": "Clases", "monto": 237_724},
+    {"fecha": "2026-07-20", "detalle": "Consuelo Silva (periodo Junio, pagado en Julio)",
+     "dept": "Clases", "monto": 350_000},  # Bruto: 188.000 + 162.000
+]
+
 NOMBRES_PERSONALES_JUNIO = {
     "Pago Cesar Lillo", "Pago Consuelo Silva", "Pago Constanza Aguayo",  # Cesar y Consuelo: pago Junio atrasado → adicionales
     "Pago Constanza Muñoz", "Pago Amanda", "Pago Nicolas Ibarra",
@@ -521,7 +530,7 @@ def _find_extras_notion(egresos_julio, registros_notion):
         else:
             individuales.append(r)
 
-    extras = individuales[:]
+    extras = list(ADICIONALES_PERIODO_ANTERIOR) + individuales
     for g in grupos.values():
         extras.append({**g, "detalle": f"{g['detalle']} ({g['n']} pagos)"})
     return sorted(extras, key=lambda x: x["fecha"])
