@@ -192,8 +192,8 @@ OVERRIDES_MES_PROX = {
 #   Nicolás Ibarra: Valor Neto total − (135.000 × 0,7) por ajuste de clases
 # ─────────────────────────────────────────────
 PAGOS_PERSONAL_JULIO = [
-    # Consuelo Silva excluida: sus pagos son del mes pasado → aparece en "adicionales"
-    {"nombre": "Pago Cesar Lillo",          "categoria": "Remuneraciones", "dia": 5,  "monto": 237_724},
+    # Consuelo y Cesar excluidos: pagos periodo Junio pagados con atraso en Julio
+    # → aparecen en "adicionales" sumados; los de Julio se cargarán cuando llegue la planilla
     {"nombre": "Pago Constanza Aguayo",     "categoria": "Remuneraciones", "dia": 5,  "monto": 114_413},
     {"nombre": "Pago Constanza Muñoz",      "categoria": "Remuneraciones", "dia": 5,  "monto": 51_528},
     {"nombre": "Pago Amanda",               "categoria": "Remuneraciones", "dia": 15, "monto": 290_000},
@@ -209,7 +209,7 @@ PAGOS_PERSONAL_JULIO = [
 
 # Nombres de personal en la hoja de Junio que se reemplazan con los valores de Julio
 NOMBRES_PERSONALES_JUNIO = {
-    "Pago Cesar Lillo", "Pago Consuelo Silva", "Pago Constanza Aguayo",
+    "Pago Cesar Lillo", "Pago Consuelo Silva", "Pago Constanza Aguayo",  # Cesar y Consuelo: pago Junio atrasado → adicionales
     "Pago Constanza Muñoz", "Pago Amanda", "Pago Nicolas Ibarra",
     "Pago Katherine Villar", "Pago Nayely", "Pago Catalina Suckel",
     "Pago Elizabeth", "Pago Constanza Torres", "Pago Contador Diego Cubillos",
@@ -493,14 +493,25 @@ def _find_extras_notion(egresos_julio, registros_notion):
                     break
         if es_contador:
             continue
+        # Pagos operacionales canalizados vía Diego Maldonado (internet, celulares,
+        # deuda Paty) → dept distinto a Administración; se excluyen de adicionales
+        # porque corresponden a gastos ya contemplados en el listado establecido
+        if r["detalle"] == "Diego Maldonado" and r.get("dept") != "Administración":
+            continue
         raw.append(r)
 
-    # Agrupar entradas con el mismo detalle en una sola línea sumada
-    AGRUPAR_DETALLES = {"Mercado Pago", "Mercado Pago crédito", "Consuelo Silva"}
+    # Agrupar entradas con el mismo tipo en una sola línea sumada
+    # Keyword → label visible (se compara con r["detalle"].lower())
+    AGRUPAR_KEYWORDS = {
+        "mercado":       "Mercado Crédito",   # "Pago de cuotas de Mercado Crédito"
+        "consuelo silva": "Consuelo Silva",
+        "cesar lillo":   "Cesar Lillo",
+    }
     grupos: dict = {}
     individuales = []
     for r in raw:
-        clave = next((k for k in AGRUPAR_DETALLES if k.lower() in r["detalle"].lower()), None)
+        clave = next((label for kw, label in AGRUPAR_KEYWORDS.items()
+                      if kw in r["detalle"].lower()), None)
         if clave:
             if clave not in grupos:
                 grupos[clave] = {"fecha": r["fecha"], "monto": 0,
