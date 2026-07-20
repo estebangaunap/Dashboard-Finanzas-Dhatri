@@ -75,7 +75,31 @@ CONTADORES = [
         "detalles_notion": {"Elizabeth Ibacache"},
         "dept_filter": None,
     },
+    {
+        "label": "Pago Amanda",
+        "nombre_sheet": "Pago Amanda",
+        "detalles_notion": {"Amanda Serrano", "Amanda"},
+        "dept_filter": None,
+    },
+    # Marketing: suma todos los egresos del dept Marketing vs presupuesto mensual
+    {
+        "label": "Marketing",
+        "nombre_sheet": "Pago Marketing",
+        "detalles_notion": set(),
+        "dept_filter": "Marketing",
+        "match_all_in_dept": True,
+        "presupuesto": 200_000,
+    },
 ]
+
+# Áreas cuyas líneas se agrupan en una sola fila con detalle colapsable en la tabla
+GRUPOS_EN_TABLA = {"Operacional", "Emporio"}
+
+# Override de categoría para ítems mal clasificados en el xlsx
+CATEGORIA_OVERRIDE = {
+    "Wix.com":            "Sistemas",
+    "Wix.com 1212841827": "Sistemas",
+}
 
 DEPT_DISPLAY = {
     "clases": "Clases", "ayurveda": "Ayurveda", "terapias": "Terapias",
@@ -154,8 +178,11 @@ ITEMS_NO_RECURRENTES = {
     "Pago SII Dhatri SPA",
 }
 
-# Ajustes puntuales de monto para la proyeccion del mes siguiente (Agosto)
-OVERRIDES_MES_PROX = {}
+# Ajustes puntuales de monto para Julio (y base de la proyección Agosto)
+OVERRIDES_MES_PROX = {
+    "Arriendo Las condes": 2_500_000,  # Claudia Berkhoff: bajó de 3M a 2.5M
+    "Arriendo Provi":        250_000,  # Fijo hasta octubre
+}
 
 # ─────────────────────────────────────────────
 # Pagos de personal Julio 2026 (Planilla Pagos Personal Julio 26)
@@ -165,9 +192,8 @@ OVERRIDES_MES_PROX = {}
 #   Nicolás Ibarra: Valor Neto total − (135.000 × 0,7) por ajuste de clases
 # ─────────────────────────────────────────────
 PAGOS_PERSONAL_JULIO = [
-    # (nombre_planilla, categoria, dia_pago, monto)
+    # Consuelo Silva excluida: sus pagos son del mes pasado → aparece en "adicionales"
     {"nombre": "Pago Cesar Lillo",          "categoria": "Remuneraciones", "dia": 5,  "monto": 237_724},
-    {"nombre": "Pago Consuelo Silva",       "categoria": "Remuneraciones", "dia": 5,  "monto": 358_000},
     {"nombre": "Pago Constanza Aguayo",     "categoria": "Remuneraciones", "dia": 5,  "monto": 114_413},
     {"nombre": "Pago Constanza Muñoz",      "categoria": "Remuneraciones", "dia": 5,  "monto": 51_528},
     {"nombre": "Pago Amanda",               "categoria": "Remuneraciones", "dia": 15, "monto": 290_000},
@@ -374,18 +400,25 @@ def marcar_pagados(items, registros_notion, tolerancia=500):
 
 def calcular_contadores(items, registros_notion):
     """Para cada contador, compara el total planificado vs lo pagado en Notion.
-    Vish & Gita y Esteban se filtran por dept Administración; Nicolas y Elizabeth
-    se buscan en todos los egresos del mes (pagos directos en dos cuotas)."""
+    - dept_filter=None : busca en todos los egresos del mes
+    - match_all_in_dept: suma todos los egresos del dept (ej. Marketing)
+    - presupuesto: override del monto planificado (ej. budget Marketing 200k)
+    """
     egresos_notion = [r for r in registros_notion if r["movimiento"] == "Egreso"]
     resultados = []
     for c in CONTADORES:
         dept = c.get("dept_filter")
         pool = [r for r in egresos_notion if dept is None or r["dept"] == dept]
-        planificado = sum(i["monto"] for i in items if i["nombre"] == c["nombre_sheet"])
-        pagos = [r for r in pool if r["detalle"] in c["detalles_notion"]]
+        planificado_sheet = sum(i["monto"] for i in items if i["nombre"] == c["nombre_sheet"])
+        planificado = c.get("presupuesto") or planificado_sheet
+        if c.get("match_all_in_dept"):
+            pagos = pool
+        else:
+            pagos = [r for r in pool if r["detalle"] in c["detalles_notion"]]
         pagado = sum(r["monto"] for r in pagos)
         resultados.append({
             "label": c["label"],
+            "nombre_sheet": c["nombre_sheet"],
             "planificado": planificado,
             "pagado": pagado,
             "pendiente": planificado - pagado,
@@ -407,9 +440,11 @@ def fmt(v):
 # ─────────────────────────────────────────────
 
 def _build_egresos_julio(egresos_junio):
-    """Construye la lista de egresos de Julio combinando:
-    - items no personales y no puntuales de Junio (base recurrente)
-    - pagos de personal actualizados desde PAGOS_PERSONAL_JULIO
+    """Construye la lista de egresos de Julio:
+    - items no personales y no puntuales de Junio con overrides aplicados
+    - pagos de personal actualizados (PAGOS_PERSONAL_JULIO)
+    - campo 'grupo' para agrupar Operacional y Emporio en la tabla
+    - CATEGORIA_OVERRIDE corrige categorías mal asignadas en el xlsx
     """
     items = []
     for it in egresos_junio:
@@ -418,48 +453,92 @@ def _build_egresos_julio(egresos_junio):
         if it["nombre"] in NOMBRES_PERSONALES_JUNIO:
             continue
         monto = OVERRIDES_MES_PROX.get(it["nombre"], it["monto"])
-        items.append({**it, "monto": monto, "pagado_manual": False})
+        area  = _area_de(it)
+        cat   = CATEGORIA_OVERRIDE.get(it["nombre"], it["categoria"])
+        grupo = area if area in GRUPOS_EN_TABLA else None
+        items.append({**it, "monto": monto, "categoria": cat,
+                      "pagado_manual": False, "grupo": grupo})
     for p in PAGOS_PERSONAL_JULIO:
-        items.append({**p, "pagado_manual": False})
+        area  = _area_de(p)
+        grupo = area if area in GRUPOS_EN_TABLA else None
+        items.append({**p, "pagado_manual": False, "grupo": grupo})
     return items
 
 
 def _find_extras_notion(egresos_julio, registros_notion):
-    """Devuelve egresos registrados en Notion el mes actual no emparejados con
-    ningún item del listado establecido (ni contadores de administración)."""
+    """Devuelve egresos de Notion del mes no emparejados con el listado establecido.
+    Agrupa Mercado Pago y Consuelo Silva en una sola línea cada uno."""
     matched_keys = set()
     for it in egresos_julio:
         m = it.get("match_notion")
         if m:
             matched_keys.add((m["fecha"], m["monto"], m["detalle"]))
 
-    extras = []
+    raw = []
     for r in registros_notion:
         if r["movimiento"] != "Egreso":
             continue
         if (r["fecha"], r["monto"], r["detalle"]) in matched_keys:
             continue
-        # Excluir pagos que pertenecen a un contador (se muestran en su sección)
         es_contador = False
         for c in CONTADORES:
             dept = c.get("dept_filter")
+            match_all = c.get("match_all_in_dept", False)
+            if match_all and dept and r["dept"] == dept:
+                es_contador = True
+                break
             if r["detalle"] in c["detalles_notion"]:
                 if dept is None or r["dept"] == dept:
                     es_contador = True
                     break
         if es_contador:
             continue
-        extras.append(r)
-    return extras
+        raw.append(r)
+
+    # Agrupar entradas con el mismo detalle en una sola línea sumada
+    AGRUPAR_DETALLES = {"Mercado Pago", "Mercado Pago crédito", "Consuelo Silva"}
+    grupos: dict = {}
+    individuales = []
+    for r in raw:
+        clave = next((k for k in AGRUPAR_DETALLES if k.lower() in r["detalle"].lower()), None)
+        if clave:
+            if clave not in grupos:
+                grupos[clave] = {"fecha": r["fecha"], "monto": 0,
+                                 "detalle": clave, "dept": r["dept"], "n": 0}
+            grupos[clave]["monto"] += r["monto"]
+            grupos[clave]["n"]     += 1
+        else:
+            individuales.append(r)
+
+    extras = individuales[:]
+    for g in grupos.values():
+        extras.append({**g, "detalle": f"{g['detalle']} ({g['n']} pagos)"})
+    return sorted(extras, key=lambda x: x["fecha"])
 
 
 def build_tabla_egresos(items, titulo, extras=None, extra_note=""):
+    # Separar items agrupados de individuales
+    grupos: dict = {}
+    individuales = []
+    for it in items:
+        g = it.get("grupo")
+        if g:
+            grupos.setdefault(g, []).append(it)
+        else:
+            individuales.append(it)
+
     rows = ""
-    for it in sorted(items, key=lambda x: x["dia"]):
-        pagado = it["pagado_manual"] or it.get("pagado_auto", False)
+
+    def _row(it, pagado_override=None):
+        pagado = pagado_override if pagado_override is not None else (
+            it["pagado_manual"] or it.get("pagado_auto", False))
         if it.get("es_contador"):
-            badge = '<span class="badge badge-contador">Ver contador ↓</span>'
-            pagado = False  # no se cuenta como pagado en el total de esta tabla
+            if it.get("contador_completo"):
+                badge  = '<span class="badge badge-ok">Pagado ✓</span>'
+                pagado = True
+            else:
+                badge  = '<span class="badge badge-contador">Ver contador ↓</span>'
+                pagado = False
         elif pagado:
             badge = '<span class="badge badge-ok">Pagado</span>'
             if it.get("pagado_auto"):
@@ -467,7 +546,7 @@ def build_tabla_egresos(items, titulo, extras=None, extra_note=""):
                 badge += f'<div class="badge-sub">Notion: {m["fecha"]} · {fmt(m["monto"])}</div>'
         else:
             badge = '<span class="badge badge-pend">Pendiente</span>'
-        rows += f"""
+        return pagado, f"""
         <tr class="{'row-ok' if pagado else 'row-pend'}">
           <td>{it['dia']:02d}/{MES_ACTUAL:02d}</td>
           <td>{it['nombre']}</td>
@@ -476,7 +555,61 @@ def build_tabla_egresos(items, titulo, extras=None, extra_note=""):
           <td>{badge}</td>
         </tr>"""
 
+    pagado_total_items = 0
+    for it in sorted(individuales, key=lambda x: x["dia"]):
+        pag, r = _row(it)
+        rows += r
+        if pag:
+            pagado_total_items += it["monto"]
+
+    # Filas agrupadas (Operacional, Emporio): una fila resumen + detalle colapsable
+    for grupo_nombre, g_items in sorted(grupos.items()):
+        total_g   = sum(i["monto"] for i in g_items)
+        pagados_g = sum(i["monto"] for i in g_items if i["pagado_manual"] or i.get("pagado_auto"))
+        pend_g    = total_g - pagados_g
+        pct_g     = pagados_g / total_g * 100 if total_g else 0
+        dia_min   = min(i["dia"] for i in g_items)
+        cat_g     = g_items[0]["categoria"]
+
+        sub_rows = ""
+        for si in sorted(g_items, key=lambda x: x["nombre"]):
+            si_pag = si["pagado_manual"] or si.get("pagado_auto", False)
+            sub_badge = (
+                f'<span class="badge badge-ok" style="font-size:9px;">✓</span>' if si_pag
+                else '<span class="badge badge-pend" style="font-size:9px;">Pend</span>'
+            )
+            sub_rows += f"""<tr style="background:#f9f9f9;font-size:12px;">
+              <td style="padding-left:20px;">↳ {si['nombre']}</td>
+              <td style="text-align:right;">{fmt(si['monto'])}</td>
+              <td>{sub_badge}</td></tr>"""
+
+        resumen_badge = (
+            '<span class="badge badge-ok">Pagado</span>' if pend_g <= 0
+            else f'<span class="badge badge-pend">{fmt(pagados_g)}/{fmt(total_g)}</span>'
+        )
+        rows += f"""
+        <tr class="{'row-ok' if pend_g <= 0 else 'row-pend'}">
+          <td>{dia_min:02d}/{MES_ACTUAL:02d}</td>
+          <td colspan="2">
+            <details style="display:inline;">
+              <summary style="cursor:pointer;font-weight:600;">
+                {grupo_nombre} ({len(g_items)} ítems)
+              </summary>
+              <table style="width:100%;margin-top:4px;">
+                <tr><th style="text-align:left;font-size:11px;">Concepto</th>
+                    <th style="text-align:right;font-size:11px;">Monto</th>
+                    <th></th></tr>
+                {sub_rows}
+              </table>
+            </details>
+          </td>
+          <td style="text-align:right;font-weight:600;">{fmt(total_g)}</td>
+          <td>{resumen_badge}</td>
+        </tr>"""
+        pagado_total_items += pagados_g
+
     extras = extras or []
+    pagado_extras = 0
     if extras:
         rows += f"""<tr><td colspan="5" style="background:#f0eeff;font-weight:700;font-size:11px;
           padding:6px 10px;color:#534AB7;">
@@ -494,7 +627,7 @@ def build_tabla_egresos(items, titulo, extras=None, extra_note=""):
 
     total_extras = sum(r["monto"] for r in extras)
     total      = sum(i["monto"] for i in items) + total_extras
-    pagado_tot = sum(i["monto"] for i in items if i["pagado_manual"] or i.get("pagado_auto")) + total_extras
+    pagado_tot = pagado_total_items + pagado_extras + total_extras
     pend_tot   = total - pagado_tot
     pct        = (pagado_tot / total * 100) if total else 0
 
@@ -1042,8 +1175,17 @@ def main():
     julio_notion = query_notion_month(ANIO_ACTUAL, MES_ACTUAL)
 
     egresos_julio = marcar_pagados(egresos_julio, julio_notion)
+    contadores    = calcular_contadores(egresos_julio, julio_notion)
+
+    # Si un contador está completamente pagado → marcarlo en la tabla principal
+    ctr_by_sheet = {c["nombre_sheet"]: c for c in contadores}
+    for it in egresos_julio:
+        if it.get("es_contador"):
+            ctr = ctr_by_sheet.get(it["nombre"])
+            if ctr and ctr["pendiente"] <= 0:
+                it["contador_completo"] = True
+
     extras_notion = _find_extras_notion(egresos_julio, julio_notion)
-    contadores = calcular_contadores(egresos_julio, julio_notion)
 
     html = HTML_HEAD.replace("%FECHA%", datetime.now().strftime("%d/%m/%Y %H:%M"))
     html = html.replace("%MES_ACTUAL%", MES_ACTUAL_NOMBRE)
