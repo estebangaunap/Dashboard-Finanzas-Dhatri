@@ -32,8 +32,8 @@ from config import NOTION_TOKEN, DB_ID, DEPT
 XLSX_PATH = "finanzas_dhatri.xlsx"
 OUT_PATH  = "dashboard_finanzas_dhatri.html"
 
-MES_ACTUAL_NOMBRE = "Junio 2026"
-ANIO_ACTUAL, MES_ACTUAL = 2026, 6
+MES_ACTUAL_NOMBRE = "Julio 2026"
+ANIO_ACTUAL, MES_ACTUAL = 2026, 7
 
 CATEGORIAS_VALIDAS = {
     "Arriendo", "Sistemas", "Directivo", "Deudas", "Remuneraciones",
@@ -72,8 +72,8 @@ DEPT_DISPLAY = {
 }
 
 # Mes siguiente (para la proyeccion de costos estimados / meta)
-MES_PROX_NOMBRE = "Julio 2026"
-ANIO_PROX, MES_PROX = 2026, 7
+MES_PROX_NOMBRE = "Agosto 2026"
+ANIO_PROX, MES_PROX = 2026, 8
 
 # Mapeo Nombre del item de la planilla -> Area (mismos nombres que usan los
 # depts de Notion, para poder comparar "basal" vs "real" en la misma grilla,
@@ -113,6 +113,7 @@ AREA_MAP = {
     "Credito Esteban": "Deudas",
     "Pago SII Dhatri SPA": "Operacional",
     "Pago Contador Diego Cubillos": "Operacional",
+    "Pago Contador Diego":          "Operacional",
     "Tummee yoga platform": "Tecnología",
     "INtereses Credito Esteban": "Deudas",
 }
@@ -139,9 +140,40 @@ ITEMS_NO_RECURRENTES = {
     "Pago SII Dhatri SPA",
 }
 
-# Ajustes puntuales de monto para la proyeccion del mes siguiente
-OVERRIDES_MES_PROX = {
-    "Pago Nayely": 60_000,
+# Ajustes puntuales de monto para la proyeccion del mes siguiente (Agosto)
+OVERRIDES_MES_PROX = {}
+
+# ─────────────────────────────────────────────
+# Pagos de personal Julio 2026 (Planilla Pagos Personal Julio 26)
+# Reglas:
+#   Consuelo, Amanda, Diego Contador, Nayely → Valor Bruto
+#   Resto → Valor Neto
+#   Nicolás Ibarra: Valor Neto total − (135.000 × 0,7) por ajuste de clases
+# ─────────────────────────────────────────────
+PAGOS_PERSONAL_JULIO = [
+    # (nombre_planilla, categoria, dia_pago, monto)
+    {"nombre": "Pago Cesar Lillo",          "categoria": "Remuneraciones", "dia": 5,  "monto": 237_724},
+    {"nombre": "Pago Consuelo Silva",       "categoria": "Remuneraciones", "dia": 5,  "monto": 358_000},
+    {"nombre": "Pago Constanza Aguayo",     "categoria": "Remuneraciones", "dia": 5,  "monto": 114_413},
+    {"nombre": "Pago Constanza Muñoz",      "categoria": "Remuneraciones", "dia": 5,  "monto": 51_528},
+    {"nombre": "Pago Amanda",               "categoria": "Remuneraciones", "dia": 15, "monto": 290_000},
+    # Neto (199.163+96.615+162.720=458.498) − 135.000×0,7 (ajuste clases) = 363.998
+    {"nombre": "Pago Nicolas Ibarra",       "categoria": "Remuneraciones", "dia": 5,  "monto": 363_998},
+    {"nombre": "Pago Katherine Villar",     "categoria": "Remuneraciones", "dia": 5,  "monto": 40_680},
+    {"nombre": "Pago Nayely",               "categoria": "Remuneraciones", "dia": 5,  "monto": 88_000},
+    {"nombre": "Pago Catalina Suckel",      "categoria": "Remuneraciones", "dia": 5,  "monto": 101_700},
+    {"nombre": "Pago Elizabeth",            "categoria": "Remuneraciones", "dia": 5,  "monto": 437_310},
+    {"nombre": "Pago Constanza Torres",     "categoria": "Remuneraciones", "dia": 5,  "monto": 114_413},
+    {"nombre": "Pago Contador Diego",       "categoria": "Directivo",      "dia": 30, "monto": 79_285},
+]
+
+# Nombres de personal en la hoja de Junio que se reemplazan con los valores de Julio
+NOMBRES_PERSONALES_JUNIO = {
+    "Pago Cesar Lillo", "Pago Consuelo Silva", "Pago Constanza Aguayo",
+    "Pago Constanza Muñoz", "Pago Amanda", "Pago Nicolas Ibarra",
+    "Pago Katherine Villar", "Pago Nayely", "Pago Catalina Suckel",
+    "Pago Elizabeth", "Pago Constanza Torres", "Pago Contador Diego Cubillos",
+    "Pago Melisa Guajardo", "Pago Paulina Osoroio",
 }
 
 # ─────────────────────────────────────────────
@@ -362,7 +394,50 @@ def fmt(v):
 # 5. HTML
 # ─────────────────────────────────────────────
 
-def build_tabla_egresos(items, titulo, extra_note=""):
+def _build_egresos_julio(egresos_junio):
+    """Construye la lista de egresos de Julio combinando:
+    - items no personales y no puntuales de Junio (base recurrente)
+    - pagos de personal actualizados desde PAGOS_PERSONAL_JULIO
+    """
+    items = []
+    for it in egresos_junio:
+        if it["nombre"] in ITEMS_NO_RECURRENTES:
+            continue
+        if it["nombre"] in NOMBRES_PERSONALES_JUNIO:
+            continue
+        monto = OVERRIDES_MES_PROX.get(it["nombre"], it["monto"])
+        items.append({**it, "monto": monto, "pagado_manual": False})
+    for p in PAGOS_PERSONAL_JULIO:
+        items.append({**p, "pagado_manual": False})
+    return items
+
+
+def _find_extras_notion(egresos_julio, registros_notion):
+    """Devuelve egresos registrados en Notion el mes actual no emparejados con
+    ningún item del listado establecido (ni contadores de administración)."""
+    matched_keys = set()
+    for it in egresos_julio:
+        m = it.get("match_notion")
+        if m:
+            matched_keys.add((m["fecha"], m["monto"], m["detalle"]))
+
+    all_counter_names = set()
+    for c in CONTADORES:
+        all_counter_names |= c["detalles_notion"]
+
+    extras = []
+    for r in registros_notion:
+        if r["movimiento"] != "Egreso":
+            continue
+        if (r["fecha"], r["monto"], r["detalle"]) in matched_keys:
+            continue
+        if r["detalle"] in all_counter_names and r["dept"] == "Administración":
+            continue
+        extras.append(r)
+    return extras
+
+
+def build_tabla_egresos(items, titulo, extras=None, extra_note=""):
     rows = ""
     for it in sorted(items, key=lambda x: x["dia"]):
         pagado = it["pagado_manual"] or it.get("pagado_auto", False)
@@ -385,8 +460,25 @@ def build_tabla_egresos(items, titulo, extra_note=""):
           <td>{badge}</td>
         </tr>"""
 
-    total      = sum(i["monto"] for i in items)
-    pagado_tot = sum(i["monto"] for i in items if i["pagado_manual"] or i.get("pagado_auto"))
+    extras = extras or []
+    if extras:
+        rows += f"""<tr><td colspan="5" style="background:#f0eeff;font-weight:700;font-size:11px;
+          padding:6px 10px;color:#534AB7;">
+          EGRESOS ADICIONALES DETECTADOS EN NOTION (no estaban en listado establecido)
+        </td></tr>"""
+        for r in sorted(extras, key=lambda x: x["fecha"]):
+            rows += f"""
+            <tr style="background:#f8f6ff;">
+              <td>{r['fecha']}</td>
+              <td>{r['detalle'] or '(sin detalle)'}</td>
+              <td>{r['dept']}</td>
+              <td style="text-align:right;font-weight:600;">{fmt(r['monto'])}</td>
+              <td><span class="badge" style="background:#eee;color:#534AB7;">Solo Notion</span></td>
+            </tr>"""
+
+    total_extras = sum(r["monto"] for r in extras)
+    total      = sum(i["monto"] for i in items) + total_extras
+    pagado_tot = sum(i["monto"] for i in items if i["pagado_manual"] or i.get("pagado_auto")) + total_extras
     pend_tot   = total - pagado_tot
     pct        = (pagado_tot / total * 100) if total else 0
 
@@ -924,28 +1016,36 @@ HTML_TAIL = """
 
 
 def main():
-    print("Leyendo Excel...")
+    print("Leyendo Excel (base Junio para items recurrentes)...")
     egresos_junio, _egresos_mayo = cargar_excel()
 
-    print("Consultando Notion...")
-    junio_notion = query_notion_month(ANIO_ACTUAL, MES_ACTUAL)
+    # Construir lista de Julio: items recurrentes de Junio + personal actualizado
+    egresos_julio = _build_egresos_julio(egresos_junio)
 
-    egresos_junio = marcar_pagados(egresos_junio, junio_notion)
-    contadores = calcular_contadores(egresos_junio, junio_notion)
+    print("Consultando Notion (Julio 2026)...")
+    julio_notion = query_notion_month(ANIO_ACTUAL, MES_ACTUAL)
+
+    egresos_julio = marcar_pagados(egresos_julio, julio_notion)
+    extras_notion = _find_extras_notion(egresos_julio, julio_notion)
+    contadores = calcular_contadores(egresos_julio, julio_notion)
 
     html = HTML_HEAD.replace("%FECHA%", datetime.now().strftime("%d/%m/%Y %H:%M"))
     html = html.replace("%MES_ACTUAL%", MES_ACTUAL_NOMBRE)
 
     # 1. Proyeccion mes siguiente: meta de ingresos vs costos estimados
-    html += build_proyeccion_julio(egresos_junio, junio_notion)
+    html += build_proyeccion_julio(egresos_julio, julio_notion)
     html += build_reducciones()
     # 2. Egresos a pagar del mes en curso: basal vs real + detalle por item
-    html += build_basal_vs_real(egresos_junio, junio_notion)
-    html += build_tabla_egresos(egresos_junio, f"Egresos a Pagar — {MES_ACTUAL_NOMBRE}")
+    html += build_basal_vs_real(egresos_julio, julio_notion)
+    html += build_tabla_egresos(
+        egresos_julio,
+        f"Egresos a Pagar — {MES_ACTUAL_NOMBRE}",
+        extras=extras_notion,
+    )
     # 3. Contadores de pagos fraccionados
     html += build_contadores(contadores)
     # 4. Distribucion de egresos por categoria
-    html += build_pie_chart(egresos_junio)
+    html += build_pie_chart(egresos_julio)
     # 5. Deudas e inversiones
     html += build_deudas_inversiones()
     html += HTML_TAIL
