@@ -55,11 +55,25 @@ CONTADORES = [
         "label": "Pago Vish & Gita",
         "nombre_sheet": "Pago Vish & Gita",
         "detalles_notion": {"Diego Maldonado"},
+        "dept_filter": "Administración",
     },
     {
         "label": "Pago Esteban",
         "nombre_sheet": "Pago Esteban",
         "detalles_notion": {"Esteban Gauna", "Esteban Andres Gauna Palavecino"},
+        "dept_filter": "Administración",
+    },
+    {
+        "label": "Pago Nicolas Ibarra",
+        "nombre_sheet": "Pago Nicolas Ibarra",
+        "detalles_notion": {"Nicolas Ibarra"},
+        "dept_filter": None,
+    },
+    {
+        "label": "Pago Elizabeth",
+        "nombre_sheet": "Pago Elizabeth",
+        "detalles_notion": {"Elizabeth Ibacache"},
+        "dept_filter": None,
     },
 ]
 
@@ -359,18 +373,16 @@ def marcar_pagados(items, registros_notion, tolerancia=500):
 
 
 def calcular_contadores(items, registros_notion):
-    """Para cada contador, compara el total planificado en el sheet vs lo
-    efectivamente pagado segun Notion (transferencias a esa persona).
-    Solo se cuentan movimientos registrados con departamento "Administración",
-    para no mezclar con pagos a la misma persona por otros conceptos."""
-    egresos_notion = [
-        r for r in registros_notion
-        if r["movimiento"] == "Egreso" and r["dept"] == "Administración"
-    ]
+    """Para cada contador, compara el total planificado vs lo pagado en Notion.
+    Vish & Gita y Esteban se filtran por dept Administración; Nicolas y Elizabeth
+    se buscan en todos los egresos del mes (pagos directos en dos cuotas)."""
+    egresos_notion = [r for r in registros_notion if r["movimiento"] == "Egreso"]
     resultados = []
     for c in CONTADORES:
+        dept = c.get("dept_filter")
+        pool = [r for r in egresos_notion if dept is None or r["dept"] == dept]
         planificado = sum(i["monto"] for i in items if i["nombre"] == c["nombre_sheet"])
-        pagos = [r for r in egresos_notion if r["detalle"] in c["detalles_notion"]]
+        pagos = [r for r in pool if r["detalle"] in c["detalles_notion"]]
         pagado = sum(r["monto"] for r in pagos)
         resultados.append({
             "label": c["label"],
@@ -421,17 +433,21 @@ def _find_extras_notion(egresos_julio, registros_notion):
         if m:
             matched_keys.add((m["fecha"], m["monto"], m["detalle"]))
 
-    all_counter_names = set()
-    for c in CONTADORES:
-        all_counter_names |= c["detalles_notion"]
-
     extras = []
     for r in registros_notion:
         if r["movimiento"] != "Egreso":
             continue
         if (r["fecha"], r["monto"], r["detalle"]) in matched_keys:
             continue
-        if r["detalle"] in all_counter_names and r["dept"] == "Administración":
+        # Excluir pagos que pertenecen a un contador (se muestran en su sección)
+        es_contador = False
+        for c in CONTADORES:
+            dept = c.get("dept_filter")
+            if r["detalle"] in c["detalles_notion"]:
+                if dept is None or r["dept"] == dept:
+                    es_contador = True
+                    break
+        if es_contador:
             continue
         extras.append(r)
     return extras
