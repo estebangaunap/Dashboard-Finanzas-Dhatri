@@ -192,8 +192,11 @@ OVERRIDES_MES_PROX = {
 #   Nicolás Ibarra: Valor Neto total − (135.000 × 0,7) por ajuste de clases
 # ─────────────────────────────────────────────
 PAGOS_PERSONAL_JULIO = [
-    # Consuelo y Cesar excluidos: pagos periodo Junio pagados con atraso en Julio
-    # → aparecen en "adicionales" sumados; los de Julio se cargarán cuando llegue la planilla
+    # Todo el listado = trabajo de Junio pagado en Julio (es el flujo normal)
+    # Bruto: 188.000 + 162.000 = 350.000
+    {"nombre": "Pago Consuelo Silva",       "categoria": "Remuneraciones", "dia": 20, "monto": 350_000},
+    # Neto: 155.093 + 82.631 = 237.724
+    {"nombre": "Pago Cesar Lillo",          "categoria": "Remuneraciones", "dia": 20, "monto": 237_724},
     {"nombre": "Pago Constanza Aguayo",     "categoria": "Remuneraciones", "dia": 15, "monto": 114_413},
     {"nombre": "Pago Constanza Muñoz",      "categoria": "Remuneraciones", "dia": 15, "monto": 51_528},
     {"nombre": "Pago Amanda",               "categoria": "Remuneraciones", "dia": 10, "monto": 290_000},
@@ -208,17 +211,10 @@ PAGOS_PERSONAL_JULIO = [
 ]
 
 # Nombres de personal en la hoja de Junio que se reemplazan con los valores de Julio
-# Pagos de periodo Junio pagados con atraso en Julio: aparecen como adicionales fijos
-# (no se buscan en Notion porque pueden no estar registrados aún en Ingresos & Egresos)
-ADICIONALES_PERIODO_ANTERIOR = [
-    {"fecha": "2026-07-20", "detalle": "Cesar Lillo (periodo Junio, pagado en Julio)",
-     "dept": "Clases", "monto": 237_724},
-    {"fecha": "2026-07-20", "detalle": "Consuelo Silva (periodo Junio, pagado en Julio)",
-     "dept": "Clases", "monto": 350_000},  # Bruto: 188.000 + 162.000
-]
+ADICIONALES_PERIODO_ANTERIOR = []  # pagos de meses anteriores pagados con atraso
 
 NOMBRES_PERSONALES_JUNIO = {
-    "Pago Cesar Lillo", "Pago Consuelo Silva", "Pago Constanza Aguayo",  # Cesar y Consuelo: pago Junio atrasado → adicionales
+    "Pago Cesar Lillo", "Pago Consuelo Silva", "Pago Constanza Aguayo",
     "Pago Constanza Muñoz", "Pago Amanda", "Pago Nicolas Ibarra",
     "Pago Katherine Villar", "Pago Nayely", "Pago Catalina Suckel",
     "Pago Elizabeth", "Pago Constanza Torres", "Pago Contador Diego Cubillos",
@@ -513,8 +509,6 @@ def _find_extras_notion(egresos_julio, registros_notion):
     # Keyword → label visible (se compara con r["detalle"].lower())
     AGRUPAR_KEYWORDS = {
         "mercado":       "Mercado Crédito",   # "Pago de cuotas de Mercado Crédito"
-        "consuelo silva": "Consuelo Silva",
-        "cesar lillo":   "Cesar Lillo",
     }
     grupos: dict = {}
     individuales = []
